@@ -1,48 +1,76 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [role, setRole] = useState<'player' | 'manager'>('player')
-  const [email, setEmail] = useState('jugador@demo.com')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isRegister, setIsRegister] = useState(false)
+  const [nombre, setNombre] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   function handleLogin() {
-    if (role === 'manager') {
-      router.push('/manager')
-    } else {
-      router.push('/home')
-    }
+    setLoading(true)
+    setError('')
+    setTimeout(() => {
+      setLoading(false)
+      if (role === 'manager') {
+        router.push('/manager')
+      } else {
+        router.push('/home')
+      }
+    }, 800)
   }
 
   return (
     <main style={{
-      background: '#0a0a0a', minHeight: '100vh', display: 'flex',
-      flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '40px 28px', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0'
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 28px',
+      fontFamily: 'system-ui, sans-serif',
+      color: '#f0f0f0',
+      background: 'linear-gradient(180deg, #0a0a0a 0%, #0a1a0a 50%, #0d2e0d 100%)',
+      maxWidth: 390,
+      margin: '0 auto',
+      boxSizing: 'border-box',
     }}>
-      <div style={{ marginBottom: 32, textAlign: 'center' }}>
+
+      {/* LOGO Y TÍTULOS */}
+      <div style={{ marginBottom: 36, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <div style={{
-          width: 80, height: 80, background: 'white', borderRadius: 16,
+          width: 110, height: 110,
+          background: 'white',
+          borderRadius: 24,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 16px'
+          overflow: 'hidden',
+          boxShadow: '0 0 40px rgba(163,230,53,0.15)',
         }}>
-          <span style={{ fontSize: 36 }}>🎾</span>
+          <Image src="/logo.png" alt="Logo Pádel Mental App" width={100} height={100} style={{ objectFit: 'contain' }} />
         </div>
-        <h1 style={{ fontWeight: 800, fontSize: 28, margin: 0 }}>MindPádel</h1>
-        <p style={{ color: '#888', fontSize: 14, marginTop: 4 }}>Tu bitácora mental deportiva</p>
+        <div>
+          <h1 style={{ fontWeight: 800, fontSize: 26, margin: 0, letterSpacing: '-0.02em' }}>Pádel Mental App</h1>
+          <p style={{ color: '#a3e635', fontSize: 13, margin: '4px 0 2px', fontWeight: 600 }}>By Ps. Mica Raffe</p>
+          <p style={{ color: '#666', fontSize: 12, margin: 0 }}>Tu bitácora mental deportiva</p>
+        </div>
       </div>
 
+      {/* FORMULARIO */}
       <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* SELECTOR ROL */}
         <p style={{ fontSize: 11, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>Ingresar como</p>
         <div style={{ display: 'flex', gap: 8 }}>
           {(['player', 'manager'] as const).map(r => (
-            <button key={r} onClick={() => {
-              setRole(r)
-              setEmail(r === 'player' ? 'jugador@demo.com' : 'psicologa@demo.com')
-            }} style={{
+            <button key={r} onClick={() => setRole(r)} style={{
               flex: 1, padding: '10px 6px',
-              background: role === r ? 'rgba(163,230,53,0.12)' : '#1a1a1a',
+              background: role === r ? 'rgba(163,230,53,0.12)' : '#111',
               border: role === r ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
               borderRadius: 10, color: role === r ? '#a3e635' : '#888',
               fontSize: 13, cursor: 'pointer', fontWeight: 600
@@ -52,30 +80,80 @@ export default function LoginPage() {
           ))}
         </div>
 
+        {/* TABS INGRESO / REGISTRO */}
+        {role === 'player' && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[false, true].map(reg => (
+              <button key={String(reg)} onClick={() => setIsRegister(reg)} style={{
+                flex: 1, padding: '8px',
+                background: isRegister === reg ? 'rgba(255,255,255,0.06)' : 'transparent',
+                border: 'none', borderBottom: isRegister === reg ? '2px solid #a3e635' : '2px solid transparent',
+                color: isRegister === reg ? '#f0f0f0' : '#666',
+                fontSize: 13, cursor: 'pointer', fontWeight: 600
+              }}>
+                {reg ? 'Crear cuenta' : 'Ingresar'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* CAMPO NOMBRE (solo registro) */}
+        {isRegister && role === 'player' && (
+          <input value={nombre} onChange={e => setNombre(e.target.value)}
+            placeholder="Tu nombre completo"
+            style={inputStyle}
+          />
+        )}
+
+        {/* EMAIL */}
         <input value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="tu@email.com"
-          style={{
-            background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 10, padding: '13px 16px', color: '#f0f0f0',
-            fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box'
-          }} />
+          placeholder="tu@email.com" type="email"
+          style={inputStyle}
+        />
 
-        <input type="password" defaultValue="demo123"
-          placeholder="••••••••"
-          style={{
-            background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 10, padding: '13px 16px', color: '#f0f0f0',
-            fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box'
-          }} />
+        {/* CONTRASEÑA */}
+        <input value={password} onChange={e => setPassword(e.target.value)}
+          placeholder="••••••••" type="password"
+          style={inputStyle}
+        />
 
-        <button onClick={handleLogin} style={{
-          background: '#a3e635', color: '#0a0a0a', border: 'none',
-          borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700,
-          cursor: 'pointer', width: '100%'
+        {/* ERROR */}
+        {error && (
+          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#f87171' }}>
+            {error}
+          </div>
+        )}
+
+        {/* BOTÓN */}
+        <button onClick={handleLogin} disabled={loading} style={{
+          background: loading ? '#555' : '#a3e635',
+          color: '#0a0a0a', border: 'none',
+          borderRadius: 12, padding: 15,
+          fontSize: 15, fontWeight: 700,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          width: '100%', transition: 'all 0.2s'
         }}>
-          Ingresar →
+          {loading ? 'Ingresando...' : isRegister ? 'Crear cuenta →' : 'Ingresar →'}
         </button>
+
+        <div style={{ textAlign: 'center', fontSize: 12, color: '#555' }}>
+          ¿Olvidaste tu contraseña? <span style={{ color: '#a3e635', cursor: 'pointer' }}>Recuperar</span>
+        </div>
+
       </div>
     </main>
   )
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 10,
+  padding: '13px 16px',
+  color: '#f0f0f0',
+  fontSize: 15,
+  outline: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+  fontFamily: 'system-ui, sans-serif',
 }
