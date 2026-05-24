@@ -1,16 +1,17 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '../lib/supabase'
 
 const emociones = [
-  { icon: '😤', label: 'Enfoque' },
-  { icon: '😰', label: 'Ansiedad' },
-  { icon: '💪', label: 'Motivación' },
-  { icon: '😤', label: 'Frustración' },
-  { icon: '😌', label: 'Tranquilidad' },
-  { icon: '🔥', label: 'Activación' },
-  { icon: '😟', label: 'Inseguridad' },
-  { icon: '🌊', label: 'Fluyendo' },
+  { icon: '😤', label: 'Enfocado' },
+  { icon: '😰', label: 'Ansioso' },
+  { icon: '💪', label: 'Motivado' },
+  { icon: '😤', label: 'Frustrado' },
+  { icon: '😌', label: 'Tranquilo' },
+  { icon: '🔥', label: 'Activado' },
+  { icon: '😟', label: 'Inseguro' },
+  { icon: '🌊', label: 'En flujo' },
 ]
 
 function Slider({ label, value, onChange }: { label: string, value: number, onChange: (v: number) => void }) {
@@ -34,6 +35,8 @@ export default function RegistrarPage() {
   const [resultado, setResultado] = useState('')
   const [emocion, setEmocion] = useState('Enfocado')
   const [guardado, setGuardado] = useState(false)
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
   const [pensamientos, setPensamientos] = useState('')
   const [autodialogo, setAutodialogo] = useState('')
   const [zor, setZor] = useState({ concentracion: 7, activacion: 6, confianza: 8, desafio: 7, motivacion: 9, frustracion: 3 })
@@ -44,23 +47,47 @@ export default function RegistrarPage() {
     'Torneo': { positivo: '🥇 Resultado positivo', negativo: '📈 Resultado a mejorar' },
   }
 
-  function guardar() {
+  async function guardar() {
+    if (!resultado) {
+      setError('Por favor indicá cómo fue la sesión')
+      return
+    }
+    setGuardando(true)
+    setError('')
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/'); return }
+
+    const { error: insertError } = await supabase.from('registros').insert({
+      user_id: user.id,
+      tipo,
+      resultado,
+      emocion,
+      concentracion: zor.concentracion,
+      activacion: zor.activacion,
+      confianza: zor.confianza,
+      desafio: zor.desafio,
+      motivacion: zor.motivacion,
+      frustracion: zor.frustracion,
+      pensamientos,
+      autodialogo,
+    })
+
+    setGuardando(false)
+
+    if (insertError) {
+      setError('Error al guardar. Intentá de nuevo.')
+      return
+    }
+
     setGuardado(true)
     setTimeout(() => {
-      setGuardado(false)
       router.push('/home')
-    }, 2000)
+    }, 1500)
   }
 
   return (
-    <main style={{
-      minHeight: '100vh',
-      fontFamily: 'system-ui, sans-serif',
-      color: '#f0f0f0',
-      maxWidth: 390,
-      margin: '0 auto',
-      background: 'linear-gradient(180deg, #0a0a0a 0%, #0a1a0a 60%, #0d2e0d 100%)',
-    }}>
+    <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
 
       {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
@@ -68,7 +95,7 @@ export default function RegistrarPage() {
           <div style={{ fontWeight: 800, fontSize: 15 }}>Pádel Mental App</div>
           <div style={{ fontSize: 9, color: '#a3e635', letterSpacing: '0.1em' }}>By Ps. Mica Raffe</div>
         </div>
-        <div onClick={() => router.push('/')} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#a3e635' }}>M</div>
+        <div onClick={() => router.push('/home')} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}>←</div>
       </div>
 
       <div style={{ padding: '0 20px 100px' }}>
@@ -82,6 +109,12 @@ export default function RegistrarPage() {
           <div style={{ background: 'rgba(163,230,53,0.12)', border: '1px solid rgba(163,230,53,0.25)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <span style={{ fontSize: 18 }}>✅</span>
             <span style={{ fontSize: 13, fontWeight: 600 }}>¡Registro guardado con éxito!</span>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#f87171', marginBottom: 16 }}>
+            {error}
           </div>
         )}
 
@@ -153,19 +186,20 @@ export default function RegistrarPage() {
           style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '13px 16px', color: '#f0f0f0', fontSize: 14, outline: 'none', resize: 'none', minHeight: 80, lineHeight: 1.5, boxSizing: 'border-box', fontFamily: 'system-ui, sans-serif' }}
         />
 
-        <button onClick={guardar} style={{
-          width: '100%', background: '#a3e635', color: '#0a0a0a', border: 'none',
+        <button onClick={guardar} disabled={guardando} style={{
+          width: '100%', background: guardando ? '#333' : '#a3e635',
+          color: guardando ? '#888' : '#0a0a0a', border: 'none',
           borderRadius: 14, padding: 17, fontSize: 16, fontWeight: 700,
-          cursor: 'pointer', marginTop: 16, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', gap: 8
+          cursor: guardando ? 'not-allowed' : 'pointer', marginTop: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
         }}>
-          💾 Guardar registro
+          {guardando ? 'Guardando...' : '💾 Guardar registro'}
         </button>
 
       </div>
 
       {/* BOTTOM NAV */}
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
           { icon: '🏠', label: 'Inicio', path: '/home', active: false },
           { icon: '➕', label: 'Registrar', path: '/registrar', active: true },
