@@ -13,47 +13,44 @@ type Registro = {
   concentracion: number
   activacion: number
   desafio: number
+  frase_ayudo: string
   created_at: string
 }
 
 type Profile = {
   nombre: string
   objetivo: string
+  insight_manager: string
 }
 
 export default function HomePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<Profile>({ nombre: '', objetivo: '' })
+  const [profile, setProfile] = useState<Profile>({ nombre: '', objetivo: '', insight_manager: '' })
   const [registros, setRegistros] = useState<Registro[]>([])
   const [loading, setLoading] = useState(true)
   const [editandoObjetivo, setEditandoObjetivo] = useState(false)
   const [objTemp, setObjTemp] = useState('')
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/'); return }
 
     const { data: prof } = await supabase
-      .from('profiles')
-      .select('nombre, objetivo')
-      .eq('id', user.id)
-      .single()
+  .from('profiles')
+  .select('nombre, objetivo, insight_manager')
+  .eq('id', user.id)
+  .single()
 
-    if (prof) {
-      setProfile(prof)
-      setObjTemp(prof.objetivo || '')
-    }
+    if (prof) { setProfile(prof); setObjTemp(prof.objetivo || '') }
 
     const { data: regs } = await supabase
       .from('registros')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(20)
 
     if (regs) setRegistros(regs)
     setLoading(false)
@@ -67,6 +64,11 @@ export default function HomePage() {
     setEditandoObjetivo(false)
   }
 
+  async function eliminarRegistro(id: string) {
+    await supabase.from('registros').delete().eq('id', id)
+    setRegistros(registros.filter(r => r.id !== id))
+  }
+
   async function cerrarSesion() {
     await supabase.auth.signOut()
     router.push('/')
@@ -74,20 +76,8 @@ export default function HomePage() {
 
   const partidos = registros.filter(r => r.tipo === 'Partido').length
   const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
-  const torneos = registros.filter(r => r.tipo === 'Torneo').length
 
-  const zorPromedio = registros.length > 0
-    ? (registros.reduce((sum, r) => sum + ((r.confianza + r.concentracion + r.activacion) / 3), 0) / registros.length).toFixed(1)
-    : '—'
-
-  const ultimoZor = registros[0]
-    ? {
-        concentracion: registros[0].concentracion,
-        activacion: registros[0].activacion,
-        confianza: registros[0].confianza,
-        desafio: registros[0].desafio,
-      }
-    : { concentracion: 0, activacion: 0, confianza: 0, desafio: 0 }
+  const ultimaFrase = registros.find(r => r.frase_ayudo && r.frase_ayudo.trim() !== '')?.frase_ayudo || ''
 
   function formatFecha(fecha: string) {
     const d = new Date(fecha)
@@ -100,8 +90,21 @@ export default function HomePage() {
 
   function iconTipo(tipo: string) {
     if (tipo === 'Partido') return '🏆'
-    if (tipo === 'Torneo') return '🥇'
     return '🎾'
+  }
+
+  function colorRendimiento(val: number) {
+    if (val >= 8) return '#a3e635'
+    if (val >= 5) return '#facc15'
+    return '#f87171'
+  }
+
+  function labelRendimiento(val: number) {
+    if (val >= 9) return 'Muy alto'
+    if (val >= 7) return 'Alto'
+    if (val >= 5) return 'Medio'
+    if (val >= 3) return 'Bajo'
+    return 'Muy bajo'
   }
 
   if (loading) return (
@@ -162,57 +165,32 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* CONTADORES */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+        {/* FRASE DE BUEN RENDIMIENTO */}
+        {ultimaFrase && (
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>✦ Tu frase de buen rendimiento</div>
+            <div style={{ fontSize: 15, lineHeight: 1.6, color: '#f0f0f0', fontStyle: 'italic' }}>"{ultimaFrase}"</div>
+          </div>
+        )}
+
+        {/* CONTADORES — solo Partidos y Entrenamientos */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
           {[
             { val: partidos, label: 'Partidos', icon: '🏆' },
-            { val: entrenamientos, label: 'Entrenos', icon: '🎾' },
-            { val: torneos, label: 'Torneos', icon: '🥇' },
+            { val: entrenamientos, label: 'Entrenamientos', icon: '🎾' },
           ].map((s, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px 12px', textAlign: 'center' }}>
-              <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-              <div style={{ fontWeight: 800, fontSize: 22, color: '#a3e635' }}>{s.val}</div>
-              <div style={{ fontSize: 10, color: '#666', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+            <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ fontWeight: 800, fontSize: 26, color: '#a3e635' }}>{s.val}</div>
+              <div style={{ fontSize: 11, color: '#666', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* ZOR */}
-        {registros.length > 0 && (
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-              <div>
-                <div style={{ color: '#a3e635', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>⚡ ZOR — Última sesión</div>
-                <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>Zona Óptima de Rendimiento</div>
-              </div>
-              <div style={{ background: 'rgba(163,230,53,0.12)', border: '1px solid rgba(163,230,53,0.25)', borderRadius: 20, padding: '4px 10px', fontSize: 11, color: '#a3e635' }}>
-                Prom. {zorPromedio}
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {[
-                { label: 'Concentración', val: ultimoZor.concentracion },
-                { label: 'Activación', val: ultimoZor.activacion },
-                { label: 'Confianza', val: ultimoZor.confianza },
-                { label: 'Desafío', val: ultimoZor.desafio },
-              ].map((m, i) => (
-                <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 12 }}>
-                  <div style={{ fontSize: 10, color: '#666', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{m.label}</div>
-                  <div style={{ fontWeight: 800, fontSize: 20, color: i % 2 === 0 ? '#a3e635' : '#f0f0f0' }}>{m.val}</div>
-                  <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginTop: 8 }}>
-                    <div style={{ height: '100%', width: `${m.val * 10}%`, background: '#a3e635', borderRadius: 2 }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* INSIGHT */}
         <div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #a3e635', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>✦ Insight de tu psicóloga</div>
-          <div style={{ fontSize: 13, lineHeight: 1.5 }}>Tus mejores partidos aparecen cuando la confianza está entre 7 y 8. Tu rendimiento baja cuando la activación supera 9.</div>
-        </div>
+<div style={{ fontSize: 13, lineHeight: 1.5 }}>{profile.insight_manager || 'Tu psicóloga todavía no escribió un insight para vos.'}</div>        </div>
 
         {/* ÚLTIMOS REGISTROS */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -228,20 +206,23 @@ export default function HomePage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {registros.slice(0, 5).map((r, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{iconTipo(r.tipo)}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{r.tipo}</div>
-                  <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{r.emocion} · {formatFecha(r.created_at)}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, fontSize: 18, color: '#a3e635' }}>
-                    {((r.confianza + r.concentracion + r.activacion) / 3).toFixed(1)}
+            {registros.slice(0, 10).map((r, i) => (
+  <div key={i} onClick={() => router.push(`/registro?id=${r.id}`)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{iconTipo(r.tipo)}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{r.tipo}</div>
+                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{formatFecha(r.created_at)}</div>
                   </div>
-                  <div style={{ fontSize: 10, marginTop: 2, fontWeight: 600, color: r.resultado?.includes('positivo') || r.resultado?.includes('Gan') || r.resultado?.includes('Positivo') ? '#a3e635' : '#f87171' }}>
-                    {r.resultado?.split(' ').slice(1).join(' ')}
+                  <div style={{ textAlign: 'right', marginRight: 8 }}>
+                    <div style={{ fontWeight: 800, fontSize: 20, color: colorRendimiento(r.resultado ? Number(r.resultado) : 0) }}>
+                      {r.resultado}/10
+                    </div>
+                    <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>
+                      {labelRendimiento(r.resultado ? Number(r.resultado) : 0)}
+                    </div>
                   </div>
+                  <div onClick={() => eliminarRegistro(r.id)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>🗑️</div>
                 </div>
               </div>
             ))}
@@ -256,7 +237,7 @@ export default function HomePage() {
           { icon: '🏠', label: 'Inicio', path: '/home', active: true },
           { icon: '➕', label: 'Registrar', path: '/registrar', active: false },
           { icon: '📊', label: 'Gráficos', path: '/graficos', active: false },
-          { icon: '📚', label: 'Biblioteca', path: '/home', active: false },
+          { icon: '📚', label: 'Biblioteca', path: '/biblioteca', active: false },
         ].map((t, i) => (
           <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
             <span style={{ fontSize: 20 }}>{t.icon}</span>
