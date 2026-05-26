@@ -10,9 +10,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [nombre, setNombre] = useState('')
   const [isRegister, setIsRegister] = useState(false)
+  const [aceptoTerminos, setAceptoTerminos] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const [mostrarTerminos, setMostrarTerminos] = useState(false)
   const router = useRouter()
 
   async function handleLogin() {
@@ -31,6 +33,11 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
+      if (!aceptoTerminos) {
+        setError('Debés aceptar los términos para continuar')
+        setLoading(false)
+        return
+      }
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -43,8 +50,9 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      setMensaje('¡Cuenta creada! Revisá tu email para confirmar y luego ingresá.')
+      setMensaje('¡Cuenta creada! Ya podés ingresar con tu email y contraseña.')
       setLoading(false)
+      setIsRegister(false)
       return
     }
 
@@ -65,13 +73,55 @@ export default function LoginPage() {
       boxSizing: 'border-box', width: '100%'
     }}>
 
+      {/* MODAL TÉRMINOS */}
+      {mostrarTerminos && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ background: '#111', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 390, maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, margin: '0 auto 20px' }}></div>
+            <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 16 }}>Términos y Consentimiento</div>
+
+            <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.7, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <div style={{ color: '#a3e635', fontWeight: 700, marginBottom: 4 }}>1. Responsable del tratamiento</div>
+                <div>Ps. Micaela Raffe (@micaraffe.psi), psicóloga deportiva matriculada, es la responsable del tratamiento de los datos personales recopilados a través de esta aplicación.</div>
+              </div>
+
+              <div>
+                <div style={{ color: '#a3e635', fontWeight: 700, marginBottom: 4 }}>2. Datos que se recopilan</div>
+                <div>Se recopilan datos personales (nombre, email) y datos de rendimiento deportivo y emocional (registros de sesiones, valoraciones ZOR, emociones, pensamientos y aprendizajes).</div>
+              </div>
+
+              <div>
+                <div style={{ color: '#a3e635', fontWeight: 700, marginBottom: 4 }}>3. Finalidad del uso</div>
+                <div>Los datos se utilizan exclusivamente para el seguimiento del rendimiento mental deportivo en el marco del trabajo psicológico entre el/la jugador/a y la Ps. Micaela Raffe. No serán compartidos con terceros.</div>
+              </div>
+
+              <div>
+                <div style={{ color: '#a3e635', fontWeight: 700, marginBottom: 4 }}>4. Almacenamiento</div>
+                <div>Los datos se almacenan en servidores seguros de Supabase (São Paulo, Brasil) con cifrado y acceso restringido. Solo la psicóloga y el/la propio/a jugador/a pueden acceder a sus datos.</div>
+              </div>
+
+              <div>
+                <div style={{ color: '#a3e635', fontWeight: 700, marginBottom: 4 }}>5. Derechos del usuario</div>
+                <div>En cumplimiento de la Ley 25.326 de Protección de Datos Personales de la República Argentina, tenés derecho a acceder, rectificar y eliminar tus datos en cualquier momento. Para ejercer estos derechos contactá a: micaraffe@gmail.com</div>
+              </div>
+
+              <div>
+                <div style={{ color: '#a3e635', fontWeight: 700, marginBottom: 4 }}>6. Consentimiento</div>
+                <div>Al crear tu cuenta aceptás el tratamiento de tus datos personales para los fines descriptos, conforme a la Ley 25.326 y sus normas complementarias.</div>
+              </div>
+            </div>
+
+            <button onClick={() => setMostrarTerminos(false)} style={{ width: '100%', background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 24 }}>
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* LOGO */}
       <div style={{ marginBottom: 36, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-        <div style={{
-          width: 110, height: 110, background: 'white', borderRadius: 24,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          overflow: 'hidden', boxShadow: '0 0 40px rgba(163,230,53,0.15)',
-        }}>
+        <div style={{ width: 110, height: 110, background: 'white', borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 0 40px rgba(163,230,53,0.15)' }}>
           <Image src="/logo.png" alt="Logo" width={100} height={100} style={{ objectFit: 'contain' }} />
         </div>
         <div>
@@ -103,9 +153,7 @@ export default function LoginPage() {
           <div style={{ display: 'flex', gap: 8 }}>
             {[false, true].map(reg => (
               <button key={String(reg)} onClick={() => { setIsRegister(reg); setError(''); setMensaje('') }} style={{
-                flex: 1, padding: '8px',
-                background: 'transparent',
-                border: 'none',
+                flex: 1, padding: '8px', background: 'transparent', border: 'none',
                 borderBottom: isRegister === reg ? '2px solid #a3e635' : '2px solid transparent',
                 color: isRegister === reg ? '#f0f0f0' : '#666',
                 fontSize: 13, cursor: 'pointer', fontWeight: 600
@@ -132,6 +180,29 @@ export default function LoginPage() {
           placeholder="••••••••" type="password"
           style={inputStyle}
         />
+
+        {/* CONSENTIMIENTO — solo al registrarse */}
+        {isRegister && role === 'player' && (
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px' }}>
+            <div onClick={() => setAceptoTerminos(!aceptoTerminos)} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                background: aceptoTerminos ? '#a3e635' : 'transparent',
+                border: aceptoTerminos ? '2px solid #a3e635' : '2px solid rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}>
+                {aceptoTerminos && <span style={{ color: '#0a0a0a', fontSize: 13, fontWeight: 800 }}>✓</span>}
+              </div>
+              <div style={{ fontSize: 12, color: '#ccc', lineHeight: 1.6 }}>
+                Acepto que mis datos personales y de rendimiento deportivo sean tratados por Ps. Mica Raffe con fines de seguimiento psicológico, conforme a la{' '}
+                <span onClick={e => { e.stopPropagation(); setMostrarTerminos(true) }} style={{ color: '#a3e635', textDecoration: 'underline', cursor: 'pointer' }}>
+                  Ley 25.326 de Protección de Datos Personales
+                </span>.
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#f87171' }}>

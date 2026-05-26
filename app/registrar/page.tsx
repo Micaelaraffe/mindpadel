@@ -16,6 +16,7 @@ const emociones = [
   { icon: '😌', label: 'Tranquilidad' },
   { icon: '😴', label: 'Agotamiento' },
   { icon: '😞', label: 'Desánimo' },
+  { icon: '🤔', label: 'Duda' },
 ]
 
 function Slider({ label, value, onChange }: { label: string, value: number, onChange: (v: number) => void }) {

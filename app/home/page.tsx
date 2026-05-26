@@ -23,13 +23,146 @@ type Profile = {
   insight_manager: string
 }
 
+type Evento = {
+  id: string
+  titulo: string
+  tipo: string
+  fecha: string
+}
+
+function Calendario({
+  registros,
+  eventos,
+  onAgregarEvento,
+}: {
+  registros: Registro[]
+  eventos: Evento[]
+  onAgregarEvento: (fecha: string) => void
+}) {
+  const hoy = new Date()
+  const [mes, setMes] = useState(hoy.getMonth())
+  const [anio, setAnio] = useState(hoy.getFullYear())
+
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate()
+  const primerDia = new Date(anio, mes, 1).getDay()
+  const offset = primerDia === 0 ? 6 : primerDia - 1
+
+  const diasConRegistro = new Set(
+    registros
+      .filter(r => {
+        const d = new Date(r.created_at)
+        return d.getMonth() === mes && d.getFullYear() === anio
+      })
+      .map(r => new Date(r.created_at).getDate())
+  )
+
+  const diasConEvento = new Map<number, Evento[]>()
+  eventos
+    .filter(e => {
+      const d = new Date(e.fecha + 'T00:00:00')
+      return d.getMonth() === mes && d.getFullYear() === anio
+    })
+    .forEach(e => {
+      const dia = new Date(e.fecha + 'T00:00:00').getDate()
+      if (!diasConEvento.has(dia)) diasConEvento.set(dia, [])
+      diasConEvento.get(dia)!.push(e)
+    })
+
+  const nombreMes = new Date(anio, mes).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+
+  function cambiarMes(dir: number) {
+    const nuevo = new Date(anio, mes + dir)
+    setMes(nuevo.getMonth())
+    setAnio(nuevo.getFullYear())
+  }
+
+  function formatFechaParaEvento(dia: number) {
+    const m = String(mes + 1).padStart(2, '0')
+    const d = String(dia).padStart(2, '0')
+    return `${anio}-${m}-${d}`
+  }
+
+  const celdas = []
+  for (let i = 0; i < offset; i++) celdas.push(null)
+  for (let i = 1; i <= diasEnMes; i++) celdas.push(i)
+
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+
+      {/* HEADER CALENDARIO */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div onClick={() => cambiarMes(-1)} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#888' }}>‹</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f0f0', textTransform: 'capitalize' }}>{nombreMes}</div>
+        <div onClick={() => cambiarMes(1)} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#888' }}>›</div>
+      </div>
+
+      {/* DÍAS DE LA SEMANA */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+          <div key={i} style={{ textAlign: 'center', fontSize: 10, color: '#555', fontWeight: 600, padding: '4px 0' }}>{d}</div>
+        ))}
+      </div>
+
+      {/* DÍAS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {celdas.map((dia, i) => {
+          if (!dia) return <div key={i}></div>
+          const esHoy = dia === hoy.getDate() && mes === hoy.getMonth() && anio === hoy.getFullYear()
+          const tieneRegistro = diasConRegistro.has(dia)
+          const tieneEvento = diasConEvento.has(dia)
+          const esFuturo = new Date(anio, mes, dia) > hoy
+
+          return (
+            <div key={i}
+              onClick={() => esFuturo && onAgregarEvento(formatFechaParaEvento(dia))}
+              style={{
+                position: 'relative',
+                textAlign: 'center',
+                padding: '6px 2px',
+                borderRadius: 8,
+                cursor: esFuturo ? 'pointer' : 'default',
+                background: esHoy ? 'rgba(163,230,53,0.15)' : tieneEvento ? 'rgba(250,204,21,0.08)' : 'transparent',
+                border: esHoy ? '1px solid rgba(163,230,53,0.4)' : '1px solid transparent',
+              }}>
+              <div style={{ fontSize: 12, color: esHoy ? '#a3e635' : tieneRegistro ? '#f0f0f0' : '#555', fontWeight: esHoy ? 700 : 400 }}>
+                {dia}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 2 }}>
+                {tieneRegistro && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#a3e635' }}></div>}
+                {tieneEvento && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#facc15' }}></div>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* LEYENDA */}
+      <div style={{ display: 'flex', gap: 14, marginTop: 12, paddingTop: 10, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635' }}></div>
+          <span style={{ fontSize: 10, color: '#666' }}>Registros</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#facc15' }}></div>
+          <span style={{ fontSize: 10, color: '#666' }}>Eventos</span>
+        </div>
+        <div style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>Tocá un día futuro para agendar</div>
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile>({ nombre: '', objetivo: '', insight_manager: '' })
   const [registros, setRegistros] = useState<Registro[]>([])
+  const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [editandoObjetivo, setEditandoObjetivo] = useState(false)
   const [objTemp, setObjTemp] = useState('')
+  const [modalEvento, setModalEvento] = useState<string | null>(null)
+  const [nuevoEvento, setNuevoEvento] = useState({ titulo: '', tipo: 'Entrenamiento' })
+  const [guardandoEvento, setGuardandoEvento] = useState(false)
 
   useEffect(() => { loadData() }, [])
 
@@ -38,11 +171,10 @@ export default function HomePage() {
     if (!user) { router.push('/'); return }
 
     const { data: prof } = await supabase
-  .from('profiles')
-  .select('nombre, objetivo, insight_manager')
-  .eq('id', user.id)
-  .single()
-
+      .from('profiles')
+      .select('nombre, objetivo, insight_manager')
+      .eq('id', user.id)
+      .single()
     if (prof) { setProfile(prof); setObjTemp(prof.objetivo || '') }
 
     const { data: regs } = await supabase
@@ -50,9 +182,16 @@ export default function HomePage() {
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(20)
-
+      .limit(50)
     if (regs) setRegistros(regs)
+
+    const { data: evs } = await supabase
+      .from('eventos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('fecha', { ascending: true })
+    if (evs) setEventos(evs)
+
     setLoading(false)
   }
 
@@ -62,6 +201,25 @@ export default function HomePage() {
     await supabase.from('profiles').update({ objetivo: objTemp }).eq('id', user.id)
     setProfile({ ...profile, objetivo: objTemp })
     setEditandoObjetivo(false)
+  }
+
+  async function guardarEvento() {
+    if (!nuevoEvento.titulo.trim() || !modalEvento) return
+    setGuardandoEvento(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase.from('eventos').insert({
+      user_id: user.id,
+      titulo: nuevoEvento.titulo,
+      tipo: nuevoEvento.tipo,
+      fecha: modalEvento,
+    }).select().single()
+
+    if (data) setEventos(prev => [...prev, data])
+    setGuardandoEvento(false)
+    setModalEvento(null)
+    setNuevoEvento({ titulo: '', tipo: 'Entrenamiento' })
   }
 
   async function eliminarRegistro(id: string) {
@@ -74,10 +232,16 @@ export default function HomePage() {
     router.push('/')
   }
 
-const partidos = registros.filter(r => r.tipo === 'Partido' || r.tipo === 'Partido amistoso' || r.tipo === 'Torneo').length
-const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
-
+  const partidos = registros.filter(r => r.tipo === 'Partido' || r.tipo === 'Partido amistoso' || r.tipo === 'Torneo').length
+  const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
   const ultimaFrase = registros.find(r => r.frase_ayudo && r.frase_ayudo.trim() !== '')?.frase_ayudo || ''
+
+  // Próximos eventos
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const proximosEventos = eventos
+    .filter(e => new Date(e.fecha + 'T00:00:00') >= hoy)
+    .slice(0, 3)
 
   function formatFecha(fecha: string) {
     const d = new Date(fecha)
@@ -88,8 +252,13 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
     return `Hace ${diff} días`
   }
 
+  function formatFechaEvento(fecha: string) {
+    return new Date(fecha + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+
   function iconTipo(tipo: string) {
-    if (tipo === 'Partido') return '🏆'
+    if (tipo === 'Partido' || tipo === 'Partido amistoso') return '🏆'
+    if (tipo === 'Torneo') return '🥇'
     return '🎾'
   }
 
@@ -115,6 +284,46 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
 
   return (
     <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
+
+      {/* MODAL AGREGAR EVENTO */}
+      {modalEvento && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => setModalEvento(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#111', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 390 }}>
+            <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, margin: '0 auto 20px' }}></div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Agendar evento</div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>
+              {new Date(modalEvento + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </div>
+
+            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Tipo</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {['Entrenamiento', 'Partido', 'Torneo'].map(t => (
+                <button key={t} onClick={() => setNuevoEvento({ ...nuevoEvento, tipo: t })} style={{
+                  flex: 1, padding: '8px 4px',
+                  background: nuevoEvento.tipo === t ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: nuevoEvento.tipo === t ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8, color: nuevoEvento.tipo === t ? '#a3e635' : '#888',
+                  fontSize: 11, cursor: 'pointer', fontWeight: 600
+                }}>{t}</button>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Descripción (opcional)</div>
+            <input value={nuevoEvento.titulo} onChange={e => setNuevoEvento({ ...nuevoEvento, titulo: e.target.value })}
+              placeholder="Ej: Torneo provincial, Club Palermo..."
+              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', color: '#f0f0f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'system-ui', marginBottom: 16 }}
+            />
+
+            <button onClick={guardarEvento} disabled={guardandoEvento} style={{ width: '100%', background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              {guardandoEvento ? 'Guardando...' : '📌 Agendar'}
+            </button>
+            <button onClick={() => setModalEvento(null)} style={{ width: '100%', background: 'transparent', color: '#666', border: 'none', padding: '12px', fontSize: 13, cursor: 'pointer', marginTop: 6 }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
@@ -165,7 +374,7 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
           )}
         </div>
 
-        {/* FRASE DE BUEN RENDIMIENTO */}
+        {/* FRASE */}
         {ultimaFrase && (
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>✦ Tu frase de buen rendimiento</div>
@@ -173,7 +382,7 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
           </div>
         )}
 
-        {/* CONTADORES — solo Partidos y Entrenamientos */}
+        {/* CONTADORES */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
           {[
             { val: partidos, label: 'Partidos', icon: '🏆' },
@@ -187,10 +396,38 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
           ))}
         </div>
 
-        {/* INSIGHT */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #a3e635', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>✦ Insight de tu psicóloga</div>
-<div style={{ fontSize: 13, lineHeight: 1.5 }}>{profile.insight_manager || 'Tu psicóloga todavía no escribió un insight para vos.'}</div>        </div>
+{/* INSIGHT */}
+<div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #f59e0b', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+  <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontWeight: 700 }}>Mensaje de tu Psicóloga Mica 🙋‍♀️</div>
+  <div style={{ fontSize: 13, lineHeight: 1.5 }}>{profile.insight_manager || 'Tu psicóloga todavía no escribió un mensaje para vos.'}</div>
+</div>
+
+        {/* CALENDARIO */}
+        <Calendario
+          registros={registros}
+          eventos={eventos}
+          onAgregarEvento={(fecha) => setModalEvento(fecha)}
+        />
+
+        {/* PRÓXIMOS EVENTOS */}
+        {proximosEventos.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 10 }}>📌 Próximos eventos</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {proximosEventos.map((e, i) => (
+                <div key={i} style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.15)', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 20 }}>{iconTipo(e.tipo)}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{e.titulo || e.tipo}</div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 2, textTransform: 'capitalize' }}>{formatFechaEvento(e.fecha)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        
 
         {/* ÚLTIMOS REGISTROS */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -206,8 +443,8 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {registros.slice(0, 10).map((r, i) => (
-  <div key={i} onClick={() => router.push(`/registro?id=${r.id}`)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
+            {registros.slice(0, 5).map((r, i) => (
+              <div key={i} onClick={() => router.push(`/registro?id=${r.id}`)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{iconTipo(r.tipo)}</div>
                   <div style={{ flex: 1 }}>
@@ -215,14 +452,14 @@ const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
                     <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{formatFecha(r.created_at)}</div>
                   </div>
                   <div style={{ textAlign: 'right', marginRight: 8 }}>
-                    <div style={{ fontWeight: 800, fontSize: 20, color: colorRendimiento(r.resultado ? Number(r.resultado) : 0) }}>
+                    <div style={{ fontWeight: 800, fontSize: 20, color: colorRendimiento(Number(r.resultado) || 0) }}>
                       {r.resultado}/10
                     </div>
                     <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>
-                      {labelRendimiento(r.resultado ? Number(r.resultado) : 0)}
+                      {labelRendimiento(Number(r.resultado) || 0)}
                     </div>
                   </div>
-                  <div onClick={() => eliminarRegistro(r.id)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>🗑️</div>
+                  <div onClick={e => { e.stopPropagation(); eliminarRegistro(r.id) }} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>🗑️</div>
                 </div>
               </div>
             ))}
