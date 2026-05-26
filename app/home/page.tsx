@@ -415,14 +415,18 @@ export default function HomePage() {
             <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 10 }}>📌 Próximos eventos</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {proximosEventos.map((e, i) => (
-                <div key={i} style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.15)', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 20 }}>{iconTipo(e.tipo)}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{e.titulo || e.tipo}</div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 2, textTransform: 'capitalize' }}>{formatFechaEvento(e.fecha)}</div>
-                  </div>
-                </div>
-              ))}
+  <div key={i} style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.15)', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+    <span style={{ fontSize: 20 }}>{iconTipo(e.tipo)}</span>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 600, fontSize: 13 }}>{e.titulo || e.tipo}</div>
+      <div style={{ fontSize: 11, color: '#888', marginTop: 2, textTransform: 'capitalize' }}>{formatFechaEvento(e.fecha)}</div>
+    </div>
+    <div onClick={async () => {
+      await supabase.from('eventos').delete().eq('id', e.id)
+      setEventos(prev => prev.filter(ev => ev.id !== e.id))
+    }} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>🗑️</div>
+  </div>
+))}
             </div>
           </div>
         )}

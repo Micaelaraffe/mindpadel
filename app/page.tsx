@@ -23,9 +23,20 @@ export default function LoginPage() {
     setMensaje('')
 
     if (role === 'manager') {
-      router.push('/manager')
-      return
-    }
+  if (email !== 'micaraffe@gmail.com') {
+    setError('No tenés acceso al panel de psicóloga.')
+    setLoading(false)
+    return
+  }
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+  if (signInError) {
+    setError('Email o contraseña incorrectos')
+    setLoading(false)
+    return
+  }
+  router.push('/manager')
+  return
+}
 
     if (isRegister) {
       if (!nombre.trim()) {
@@ -228,9 +239,24 @@ export default function LoginPage() {
         </button>
 
         <div style={{ textAlign: 'center', fontSize: 12, color: '#555' }}>
-          ¿Olvidaste tu contraseña?{' '}
-          <span style={{ color: '#a3e635', cursor: 'pointer' }}>Recuperar</span>
-        </div>
+  ¿Olvidaste tu contraseña?{' '}
+  <span onClick={async () => {
+    if (!email) {
+      setError('Escribí tu email arriba primero')
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://mindpadel.vercel.app/reset-password',
+    })
+    if (error) {
+      setError('Error al enviar el email. Verificá que el email sea correcto.')
+    } else {
+      setMensaje('Te enviamos un email para recuperar tu contraseña. Revisá tu casilla.')
+    }
+  }} style={{ color: '#a3e635', cursor: 'pointer', textDecoration: 'underline' }}>
+    Recuperar
+  </span>
+</div>
 
       </div>
     </main>
