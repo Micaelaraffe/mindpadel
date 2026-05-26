@@ -208,7 +208,7 @@ async function guardar() {
         </div>
 
         {/* EMOCIONES — múltiple selección */}
-        <div style={{ fontSize: 11, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Emociones</div>
+        <div style={{ fontSize: 11, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Emociones durante el juego</div>
         <div style={{ fontSize: 12, color: '#666', marginBottom: 10 }}>Podés seleccionar más de una</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
           {emociones.map(e => (
@@ -226,8 +226,11 @@ async function guardar() {
 
         {/* ZOR */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4, fontWeight: 700 }}>⚡ ZOR — Zona Óptima de Rendimiento</div>
-          <div style={{ fontSize: 12, color: '#666', marginBottom: 16 }}>Indicá para cada uno el nivel predominante en el que jugaste</div>
+          <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontWeight: 700 }}>⚡ ZOR — Zona Óptima de Rendimiento</div>
+<div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, marginBottom: 6 }}>
+  La <span style={{ color: '#a3e635', fontWeight: 600 }}>Zona Óptima de Rendimiento</span> es el estado mental ideal en el que un deportista rinde al máximo. Cada persona tiene su propia zona — y con estos registros encontrarás la tuya.
+</div>
+<div style={{ fontSize: 12, color: '#666', marginBottom: 16 }}>Indicá para cada uno el nivel predominante en el que jugaste hoy 👇</div>
           <Slider label="Concentración" value={zor.concentracion} onChange={v => setZor({ ...zor, concentracion: v })} />
           <Slider label="Activación" value={zor.activacion} onChange={v => setZor({ ...zor, activacion: v })} />
           <Slider label="Confianza" value={zor.confianza} onChange={v => setZor({ ...zor, confianza: v })} />

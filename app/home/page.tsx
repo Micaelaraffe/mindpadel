@@ -74,8 +74,8 @@ export default function HomePage() {
     router.push('/')
   }
 
-  const partidos = registros.filter(r => r.tipo === 'Partido').length
-  const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
+const partidos = registros.filter(r => r.tipo === 'Partido' || r.tipo === 'Partido amistoso' || r.tipo === 'Torneo').length
+const entrenamientos = registros.filter(r => r.tipo === 'Entrenamiento').length
 
   const ultimaFrase = registros.find(r => r.frase_ayudo && r.frase_ayudo.trim() !== '')?.frase_ayudo || ''
 

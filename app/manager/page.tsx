@@ -139,32 +139,50 @@ export default function ManagerPage() {
   }
 
   async function guardarInsight() {
-    if (!jugadorSeleccionado) return
-    setGuardandoInsight(true)
-    await supabase
-      .from('profiles')
-      .update({ insight_manager: insight })
-      .eq('id', jugadorSeleccionado.id)
+  if (!jugadorSeleccionado) return
+  setGuardandoInsight(true)
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ insight_manager: insight })
+    .eq('id', jugadorSeleccionado.id)
+
+  if (error) {
+    console.error('Error guardando insight:', error.message)
+    setMensajeExito('Error al guardar. Intentá de nuevo.')
+  } else {
     setJugadores(prev => prev.map(j =>
       j.id === jugadorSeleccionado.id ? { ...j, insight_manager: insight } : j
     ))
-    setGuardandoInsight(false)
     setMensajeExito('Insight guardado ✓')
     setTimeout(() => setMensajeExito(''), 2000)
   }
+  
+  setGuardandoInsight(false)
+}
 
   async function subirArchivo(file: File) {
-    const ext = file.name.split('.').pop()
-    const fileName = `${Date.now()}.${ext}`
-    const { data, error } = await supabase.storage
-      .from('biblioteca')
-      .upload(fileName, file)
-    if (error || !data) return null
-    const { data: urlData } = supabase.storage
-      .from('biblioteca')
-      .getPublicUrl(fileName)
-    return urlData.publicUrl
+  const ext = file.name.split('.').pop()
+  const fileName = `archivo_${Date.now()}.${ext}`
+  
+  const { error } = await supabase.storage
+    .from('biblioteca')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true
+    })
+    
+  if (error) {
+    console.error('Error subiendo archivo:', error.message)
+    return null
   }
+  
+  const { data: urlData } = supabase.storage
+    .from('biblioteca')
+    .getPublicUrl(fileName)
+    
+  return urlData.publicUrl
+}
 
   function detectarTipo(file: File) {
     if (file.type.includes('pdf')) return 'PDF'
@@ -175,39 +193,57 @@ export default function ManagerPage() {
   }
 
   async function handleSubirContenido() {
-    if (!nuevoItem.titulo.trim()) return
-    setSubiendo(true)
+  if (!nuevoItem.titulo.trim()) {
+    setMensajeExito('Por favor escribí un título')
+    return
+  }
+  setSubiendo(true)
 
-    let urlFinal = nuevoItem.url
+  let urlFinal = nuevoItem.url
+  let tipoFinal = nuevoItem.tipo
 
-    if (fileRef.current?.files?.[0]) {
-      const file = fileRef.current.files[0]
-      const url = await subirArchivo(file)
-      if (url) {
-        urlFinal = url
-        setNuevoItem(prev => ({ ...prev, tipo: detectarTipo(file) }))
-      }
-    }
-
-    const { data, error } = await supabase.from('biblioteca').insert({
-      titulo: nuevoItem.titulo,
-      descripcion: nuevoItem.descripcion,
-      tipo: nuevoItem.tipo,
-      tag: nuevoItem.tag,
-      url: urlFinal,
-    }).select().single()
-
-    setSubiendo(false)
-
-    if (!error && data) {
-      setBiblioteca(prev => [data, ...prev])
-      setNuevoItem({ titulo: '', descripcion: '', tipo: 'PDF', tag: '', url: '' })
-      if (fileRef.current) fileRef.current.value = ''
-      setMostrarFormBiblioteca(false)
-      setMensajeExito('Contenido subido con éxito ✓')
-      setTimeout(() => setMensajeExito(''), 2500)
+  if (fileRef.current?.files?.[0]) {
+    const file = fileRef.current.files[0]
+    tipoFinal = detectarTipo(file)
+    const url = await subirArchivo(file)
+    if (url) {
+      urlFinal = url
+    } else {
+      setSubiendo(false)
+      setMensajeExito('Error al subir el archivo. Verificá los permisos del storage.')
+      return
     }
   }
+
+  const { data, error } = await supabase
+    .from('biblioteca')
+    .insert({
+      titulo: nuevoItem.titulo,
+      descripcion: nuevoItem.descripcion,
+      tipo: tipoFinal,
+      tag: nuevoItem.tag,
+      url: urlFinal,
+    })
+    .select()
+    .single()
+
+  setSubiendo(false)
+
+  if (error) {
+    console.error('Error guardando en biblioteca:', error.message)
+    setMensajeExito(`Error: ${error.message}`)
+    return
+  }
+
+  if (data) {
+    setBiblioteca(prev => [data, ...prev])
+    setNuevoItem({ titulo: '', descripcion: '', tipo: 'PDF', tag: '', url: '' })
+    if (fileRef.current) fileRef.current.value = ''
+    setMostrarFormBiblioteca(false)
+    setMensajeExito('¡Contenido subido con éxito! ✓')
+    setTimeout(() => setMensajeExito(''), 3000)
+  }
+}
 
   async function eliminarItem(id: string) {
     await supabase.from('biblioteca').delete().eq('id', id)
