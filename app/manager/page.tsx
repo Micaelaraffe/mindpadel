@@ -25,6 +25,7 @@ type Registro = {
   pensamientos: string
   frase_ayudo: string
   aprendizajes: string
+  tiempo_segundos: number
   created_at: string
 }
 
@@ -62,6 +63,11 @@ function colorRendimiento(val: number) {
   return '#f87171'
 }
 
+function formatTiempo(segundos: number) {
+  if (segundos < 60) return segundos + 's'
+  return Math.floor(segundos / 60) + 'm ' + (segundos % 60) + 's'
+}
+
 export default function ManagerPage() {
   const router = useRouter()
   const [tab, setTab] = useState<'jugadores' | 'biblioteca'>('jugadores')
@@ -75,6 +81,8 @@ export default function ManagerPage() {
   const [mostrarFormBiblioteca, setMostrarFormBiblioteca] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
   const [mensajeExito, setMensajeExito] = useState('')
+  const [depositosBanco, setDepositosBanco] = useState(0)
+const [pensamientos, setPensamientos] = useState<{pensamiento_negativo: string, created_at: string}[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [nuevoItem, setNuevoItem] = useState({
@@ -86,14 +94,6 @@ export default function ManagerPage() {
   })
 
   useEffect(() => { loadData() }, [])
-
-  async function eliminarJugador(id: string) {
-  const confirmar = window.confirm('¿Seguro que querés eliminar este jugador? Se borrarán todos sus registros.')
-  if (!confirmar) return
-  await supabase.from('registros').delete().eq('user_id', id)
-  await supabase.from('profiles').delete().eq('id', id)
-  setJugadores(prev => prev.filter(j => j.id !== id))
-}
 
   async function loadData() {
     const { data: players } = await supabase
@@ -128,61 +128,56 @@ export default function ManagerPage() {
   }
 
   async function verJugador(jugador: Jugador) {
-    setJugadorSeleccionado(jugador)
-    setInsight(jugador.insight_manager || '')
-    const { data } = await supabase
-      .from('registros')
-      .select('*')
-      .eq('user_id', jugador.id)
-      .order('created_at', { ascending: false })
-    if (data) setRegistrosJugador(data)
-  }
+  setJugadorSeleccionado(jugador)
+  setInsight(jugador.insight_manager || '')
+  
+  const { data: regs } = await supabase
+    .from('registros')
+    .select('*')
+    .eq('user_id', jugador.id)
+    .order('created_at', { ascending: false })
+  if (regs) setRegistrosJugador(regs)
+
+  const { data: diarios, count } = await supabase
+    .from('diario_confianza')
+    .select('pensamiento_negativo, created_at', { count: 'exact' })
+    .eq('user_id', jugador.id)
+    .not('pensamiento_negativo', 'eq', '')
+    .order('created_at', { ascending: false })
+  
+  setDepositosBanco(count || 0)
+  setPensamientos(diarios || [])
+}
 
   async function guardarInsight() {
-  if (!jugadorSeleccionado) return
-  setGuardandoInsight(true)
-  
-  const { error } = await supabase
-    .from('profiles')
-    .update({ insight_manager: insight })
-    .eq('id', jugadorSeleccionado.id)
-
-  if (error) {
-    console.error('Error guardando insight:', error.message)
-    setMensajeExito('Error al guardar. Intentá de nuevo.')
-  } else {
-    setJugadores(prev => prev.map(j =>
-      j.id === jugadorSeleccionado.id ? { ...j, insight_manager: insight } : j
-    ))
-    setMensajeExito('Insight guardado ✓')
-    setTimeout(() => setMensajeExito(''), 2000)
+    if (!jugadorSeleccionado) return
+    setGuardandoInsight(true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ insight_manager: insight })
+      .eq('id', jugadorSeleccionado.id)
+    if (error) {
+      setMensajeExito('Error al guardar. Intentá de nuevo.')
+    } else {
+      setJugadores(prev => prev.map(j =>
+        j.id === jugadorSeleccionado.id ? { ...j, insight_manager: insight } : j
+      ))
+      setMensajeExito('Insight guardado ✓')
+      setTimeout(() => setMensajeExito(''), 2000)
+    }
+    setGuardandoInsight(false)
   }
-  
-  setGuardandoInsight(false)
-}
 
   async function subirArchivo(file: File) {
-  const ext = file.name.split('.').pop()
-  const fileName = `archivo_${Date.now()}.${ext}`
-  
-  const { error } = await supabase.storage
-    .from('biblioteca')
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: true
-    })
-    
-  if (error) {
-    console.error('Error subiendo archivo:', error.message)
-    return null
+    const ext = file.name.split('.').pop()
+    const fileName = `archivo_${Date.now()}.${ext}`
+    const { error } = await supabase.storage
+      .from('biblioteca')
+      .upload(fileName, file, { cacheControl: '3600', upsert: true })
+    if (error) return null
+    const { data: urlData } = supabase.storage.from('biblioteca').getPublicUrl(fileName)
+    return urlData.publicUrl
   }
-  
-  const { data: urlData } = supabase.storage
-    .from('biblioteca')
-    .getPublicUrl(fileName)
-    
-  return urlData.publicUrl
-}
 
   function detectarTipo(file: File) {
     if (file.type.includes('pdf')) return 'PDF'
@@ -193,61 +188,52 @@ export default function ManagerPage() {
   }
 
   async function handleSubirContenido() {
-  if (!nuevoItem.titulo.trim()) {
-    setMensajeExito('Por favor escribí un título')
-    return
-  }
-  setSubiendo(true)
+    if (!nuevoItem.titulo.trim()) return
+    setSubiendo(true)
 
-  let urlFinal = nuevoItem.url
-  let tipoFinal = nuevoItem.tipo
+    let urlFinal = nuevoItem.url
+    let tipoFinal = nuevoItem.tipo
 
-  if (fileRef.current?.files?.[0]) {
-    const file = fileRef.current.files[0]
-    tipoFinal = detectarTipo(file)
-    const url = await subirArchivo(file)
-    if (url) {
-      urlFinal = url
-    } else {
-      setSubiendo(false)
-      setMensajeExito('Error al subir el archivo. Verificá los permisos del storage.')
-      return
+    if (fileRef.current?.files?.[0]) {
+      const file = fileRef.current.files[0]
+      tipoFinal = detectarTipo(file)
+      const url = await subirArchivo(file)
+      if (url) urlFinal = url
+      else {
+        setSubiendo(false)
+        setMensajeExito('Error al subir el archivo.')
+        return
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('biblioteca')
+      .insert({ titulo: nuevoItem.titulo, descripcion: nuevoItem.descripcion, tipo: tipoFinal, tag: nuevoItem.tag, url: urlFinal })
+      .select().single()
+
+    setSubiendo(false)
+
+    if (!error && data) {
+      setBiblioteca(prev => [data, ...prev])
+      setNuevoItem({ titulo: '', descripcion: '', tipo: 'PDF', tag: '', url: '' })
+      if (fileRef.current) fileRef.current.value = ''
+      setMostrarFormBiblioteca(false)
+      setMensajeExito('¡Contenido subido con éxito! ✓')
+      setTimeout(() => setMensajeExito(''), 2500)
     }
   }
-
-  const { data, error } = await supabase
-    .from('biblioteca')
-    .insert({
-      titulo: nuevoItem.titulo,
-      descripcion: nuevoItem.descripcion,
-      tipo: tipoFinal,
-      tag: nuevoItem.tag,
-      url: urlFinal,
-    })
-    .select()
-    .single()
-
-  setSubiendo(false)
-
-  if (error) {
-    console.error('Error guardando en biblioteca:', error.message)
-    setMensajeExito(`Error: ${error.message}`)
-    return
-  }
-
-  if (data) {
-    setBiblioteca(prev => [data, ...prev])
-    setNuevoItem({ titulo: '', descripcion: '', tipo: 'PDF', tag: '', url: '' })
-    if (fileRef.current) fileRef.current.value = ''
-    setMostrarFormBiblioteca(false)
-    setMensajeExito('¡Contenido subido con éxito! ✓')
-    setTimeout(() => setMensajeExito(''), 3000)
-  }
-}
 
   async function eliminarItem(id: string) {
     await supabase.from('biblioteca').delete().eq('id', id)
     setBiblioteca(prev => prev.filter(i => i.id !== id))
+  }
+
+  async function eliminarJugador(id: string) {
+    const confirmar = window.confirm('¿Seguro que querés eliminar este jugador? Se borrarán todos sus registros.')
+    if (!confirmar) return
+    await supabase.from('registros').delete().eq('user_id', id)
+    await supabase.from('profiles').delete().eq('id', id)
+    setJugadores(prev => prev.filter(j => j.id !== id))
   }
 
   async function cerrarSesion() {
@@ -262,119 +248,165 @@ export default function ManagerPage() {
   )
 
   // PANTALLA DETALLE JUGADOR
-  if (jugadorSeleccionado) return (
-    <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
-        <div>
-          <div style={{ fontWeight: 800, fontSize: 15 }}>Pádel Mental App</div>
-          <div style={{ fontSize: 9, color: '#a3e635', letterSpacing: '0.1em' }}>Panel Manager</div>
-        </div>
-        <div onClick={() => setJugadorSeleccionado(null)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer', color: '#a3e635' }}>←</div>
-      </div>
+  if (jugadorSeleccionado) {
+    const regsConTiempo = registrosJugador.filter(r => r.tiempo_segundos > 0)
+    const tiempoPromedio = regsConTiempo.length > 0
+      ? Math.floor(regsConTiempo.reduce((s, r) => s + r.tiempo_segundos, 0) / regsConTiempo.length)
+      : 0
 
-      <div style={{ padding: '0 20px 40px' }}>
-
-        {/* PERFIL */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 14, background: 'rgba(163,230,53,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 22, color: '#a3e635', flexShrink: 0 }}>
-            {jugadorSeleccionado.nombre.charAt(0).toUpperCase()}
-          </div>
+    return (
+      <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 20 }}>{jugadorSeleccionado.nombre}</div>
-            <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{jugadorSeleccionado.totalRegistros} registros totales</div>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>Pádel Mental App</div>
+            <div style={{ fontSize: 9, color: '#a3e635', letterSpacing: '0.1em' }}>Panel Manager</div>
           </div>
+          <div onClick={() => setJugadorSeleccionado(null)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer', color: '#a3e635' }}>←</div>
         </div>
 
-        {/* OBJETIVO */}
-        {jugadorSeleccionado.objetivo && (
-          <div style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 14, padding: 14, marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>🎯 Objetivo del jugador</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5 }}>{jugadorSeleccionado.objetivo}</div>
-          </div>
-        )}
+        <div style={{ padding: '0 20px 40px' }}>
 
-        {/* INSIGHT MANAGER */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>✦ Tu insight para este jugador</div>
-          <textarea
-            value={insight}
-            onChange={e => setInsight(e.target.value)}
-            placeholder="Escribí un insight o feedback para este jugador. Aparecerá en su Home."
-            style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 90, boxSizing: 'border-box', fontFamily: 'system-ui, sans-serif', lineHeight: 1.5 }}
-          />
-          {mensajeExito && (
-            <div style={{ fontSize: 12, color: '#a3e635', marginTop: 6 }}>{mensajeExito}</div>
+          {/* PERFIL */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: 'rgba(163,230,53,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 22, color: '#a3e635', flexShrink: 0 }}>
+              {jugadorSeleccionado.nombre.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 20 }}>{jugadorSeleccionado.nombre}</div>
+              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{jugadorSeleccionado.totalRegistros} registros totales</div>
+            </div>
+          </div>
+
+          {/* OBJETIVO */}
+          {jugadorSeleccionado.objetivo && (
+            <div style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 14, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontSize: 10, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>🎯 Objetivo del jugador</div>
+              <div style={{ fontSize: 13, lineHeight: 1.5 }}>{jugadorSeleccionado.objetivo}</div>
+            </div>
           )}
-          <button onClick={guardarInsight} disabled={guardandoInsight} style={{ width: '100%', background: guardandoInsight ? '#333' : '#a3e635', color: guardandoInsight ? '#888' : '#0a0a0a', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>
-            {guardandoInsight ? 'Guardando...' : 'Guardar insight'}
-          </button>
+
+          {/* TIEMPO PROMEDIO */}
+          {tiempoPromedio > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>⏱️ Tiempo promedio</div>
+                <div style={{ fontWeight: 800, fontSize: 24, color: '#a3e635' }}>{formatTiempo(tiempoPromedio)}</div>
+                <div style={{ fontSize: 11, color: '#666', marginTop: 3 }}>por registro</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>📋 Con tiempo</div>
+                <div style={{ fontWeight: 800, fontSize: 24, color: '#a3e635' }}>{regsConTiempo.length}</div>
+                <div style={{ fontSize: 11, color: '#666', marginTop: 3 }}>de {registrosJugador.length} registros</div>
+              </div>
+            </div>
+          )}
+
+{/* BANCO DE CONFIANZA */}
+<div style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.15)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+    <div style={{ fontSize: 11, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>💛 Banco de Confianza</div>
+    <div style={{ background: 'rgba(250,204,21,0.15)', border: '1px solid rgba(250,204,21,0.3)', borderRadius: 20, padding: '4px 12px' }}>
+      <span style={{ fontWeight: 800, fontSize: 18, color: '#facc15' }}>{depositosBanco}</span>
+      <span style={{ fontSize: 11, color: '#888', marginLeft: 4 }}>depósitos</span>
+    </div>
+  </div>
+
+  {pensamientos.length === 0 ? (
+    <div style={{ fontSize: 13, color: '#555' }}>No hay pensamientos registrados todavía.</div>
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {pensamientos.map((p, i) => (
+        <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px' }}>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>
+            {new Date(p.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </div>
+          <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.5, fontStyle: 'italic' }}>"{p.pensamiento_negativo}"</div>
         </div>
+      ))}
+    </div>
+  )}
+</div>
 
-        {/* REGISTROS */}
-        <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 12 }}>Registros del jugador</div>
+          {/* INSIGHT */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontSize: 11, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>✦ Tu insight para este jugador</div>
+            <textarea value={insight} onChange={e => setInsight(e.target.value)}
+              placeholder="Escribí un insight o feedback para este jugador. Aparecerá en su Home."
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 90, boxSizing: 'border-box', fontFamily: 'system-ui, sans-serif', lineHeight: 1.5 }}
+            />
+            {mensajeExito && <div style={{ fontSize: 12, color: '#a3e635', marginTop: 6 }}>{mensajeExito}</div>}
+            <button onClick={guardarInsight} disabled={guardandoInsight} style={{ width: '100%', background: guardandoInsight ? '#333' : '#a3e635', color: guardandoInsight ? '#888' : '#0a0a0a', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>
+              {guardandoInsight ? 'Guardando...' : 'Guardar insight'}
+            </button>
+          </div>
 
-        {registrosJugador.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '30px', color: '#555', fontSize: 13 }}>Todavía no tiene registros.</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {registrosJugador.map((r, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{r.tipo}</div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{formatFecha(r.created_at)}</div>
+          {/* REGISTROS */}
+          <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 12 }}>Registros del jugador</div>
+
+          {registrosJugador.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '30px', color: '#555', fontSize: 13 }}>Todavía no tiene registros.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {registrosJugador.map((r, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{r.tipo}</div>
+                      <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                        {formatFecha(r.created_at)}
+                        {r.tiempo_segundos > 0 && (
+                          <span style={{ marginLeft: 6, color: '#666' }}>· ⏱️ {formatTiempo(r.tiempo_segundos)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 800, fontSize: 22, color: colorRendimiento(Number(r.resultado)) }}>{r.resultado}/10</div>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 800, fontSize: 22, color: colorRendimiento(Number(r.resultado)) }}>{r.resultado}/10</div>
-                  </div>
-                </div>
-                {r.emocion && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                    {r.emocion.split(', ').map((e, j) => (
-                      <span key={j} style={{ background: 'rgba(163,230,53,0.08)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 20, fontSize: 11, color: '#a3e635', padding: '2px 10px' }}>{e}</span>
+                  {r.emocion && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                      {r.emocion.split(', ').map((e, j) => (
+                        <span key={j} style={{ background: 'rgba(163,230,53,0.08)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 20, fontSize: 11, color: '#a3e635', padding: '2px 10px' }}>{e}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                    {[
+                      { label: 'Conc.', val: r.concentracion },
+                      { label: 'Activ.', val: r.activacion },
+                      { label: 'Conf.', val: r.confianza },
+                    ].map((m, j) => (
+                      <div key={j} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 10, color: '#666', marginBottom: 2 }}>{m.label}</div>
+                        <div style={{ fontWeight: 700, fontSize: 16, color: '#a3e635' }}>{m.val}</div>
+                      </div>
                     ))}
                   </div>
-                )}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  {[
-                    { label: 'Conc.', val: r.concentracion },
-                    { label: 'Activ.', val: r.activacion },
-                    { label: 'Conf.', val: r.confianza },
-                  ].map((m, j) => (
-                    <div key={j} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 10, color: '#666', marginBottom: 2 }}>{m.label}</div>
-                      <div style={{ fontWeight: 700, fontSize: 16, color: '#a3e635' }}>{m.val}</div>
+                  {r.pensamientos && (
+                    <div style={{ marginTop: 10, fontSize: 13, color: '#ccc', lineHeight: 1.5, borderTop: '0.5px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+                      <span style={{ color: '#666', fontSize: 11 }}>Pensamientos: </span>{r.pensamientos}
                     </div>
-                  ))}
+                  )}
+                  {r.frase_ayudo && (
+                    <div style={{ marginTop: 8, fontSize: 13, color: '#a3e635', fontStyle: 'italic', lineHeight: 1.5 }}>"{r.frase_ayudo}"</div>
+                  )}
+                  {r.aprendizajes && (
+                    <div style={{ marginTop: 8, fontSize: 13, color: '#ccc', lineHeight: 1.5 }}>
+                      <span style={{ color: '#666', fontSize: 11 }}>Aprendizaje: </span>{r.aprendizajes}
+                    </div>
+                  )}
                 </div>
-                {r.pensamientos && (
-                  <div style={{ marginTop: 10, fontSize: 13, color: '#ccc', lineHeight: 1.5, borderTop: '0.5px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
-                    <span style={{ color: '#666', fontSize: 11 }}>Pensamientos: </span>{r.pensamientos}
-                  </div>
-                )}
-                {r.frase_ayudo && (
-                  <div style={{ marginTop: 8, fontSize: 13, color: '#a3e635', fontStyle: 'italic', lineHeight: 1.5 }}>
-                    "{r.frase_ayudo}"
-                  </div>
-                )}
-                {r.aprendizajes && (
-                  <div style={{ marginTop: 8, fontSize: 13, color: '#ccc', lineHeight: 1.5 }}>
-                    <span style={{ color: '#666', fontSize: 11 }}>Aprendizaje: </span>{r.aprendizajes}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  )
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    )
+  }
 
-  // PANTALLA PRINCIPAL MANAGER
   return (
     <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
 
-      {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
         <div>
           <div style={{ fontWeight: 800, fontSize: 15 }}>Pádel Mental App</div>
@@ -385,13 +417,11 @@ export default function ManagerPage() {
 
       <div style={{ padding: '0 20px 100px' }}>
 
-        {/* SALUDO */}
         <div style={{ paddingBottom: 20 }}>
           <div style={{ display: 'inline-block', background: 'rgba(163,230,53,0.12)', color: '#a3e635', fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(163,230,53,0.25)', marginBottom: 8 }}>✦ Panel Manager</div>
           <div style={{ fontWeight: 800, fontSize: 26, letterSpacing: '-0.02em' }}>Hola, Micaela 🧠</div>
         </div>
 
-        {/* STATS */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
           {[
             { val: jugadores.length, label: 'Jugadores', icon: '👥' },
@@ -405,7 +435,6 @@ export default function ManagerPage() {
           ))}
         </div>
 
-        {/* TABS */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           {[
             { id: 'jugadores', label: '👥 Jugadores' },
@@ -415,12 +444,11 @@ export default function ManagerPage() {
               flex: 1, padding: '12px 8px', background: 'transparent', border: 'none',
               borderBottom: tab === t.id ? '2px solid #a3e635' : '2px solid transparent',
               color: tab === t.id ? '#f0f0f0' : '#666', fontSize: 14, fontWeight: tab === t.id ? 700 : 400,
-              cursor: 'pointer', transition: 'all 0.2s'
+              cursor: 'pointer'
             }}>{t.label}</button>
           ))}
         </div>
 
-        {/* TAB JUGADORES */}
         {tab === 'jugadores' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {jugadores.length === 0 ? (
@@ -431,26 +459,25 @@ export default function ManagerPage() {
             ) : (
               jugadores.map((j, i) => (
                 <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-  <div onClick={() => verJugador(j)} style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(163,230,53,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: '#a3e635', flexShrink: 0, cursor: 'pointer' }}>
-    {j.nombre.charAt(0).toUpperCase()}
-  </div>
-  <div onClick={() => verJugador(j)} style={{ flex: 1, cursor: 'pointer' }}>
-    <div style={{ fontWeight: 600, fontSize: 15 }}>{j.nombre}</div>
-    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-      {j.totalRegistros} registros · {j.ultimoRegistro ? formatFecha(j.ultimoRegistro) : 'Sin registros'}
-    </div>
-  </div>
-  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-    <div onClick={() => verJugador(j)} style={{ color: '#a3e635', fontSize: 18, cursor: 'pointer' }}>→</div>
-    <div onClick={() => eliminarJugador(j.id)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>🗑️</div>
-  </div>
-</div>
+                  <div onClick={() => verJugador(j)} style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(163,230,53,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: '#a3e635', flexShrink: 0, cursor: 'pointer' }}>
+                    {j.nombre.charAt(0).toUpperCase()}
+                  </div>
+                  <div onClick={() => verJugador(j)} style={{ flex: 1, cursor: 'pointer' }}>
+                    <div style={{ fontWeight: 600, fontSize: 15 }}>{j.nombre}</div>
+                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                      {j.totalRegistros} registros · {j.ultimoRegistro ? formatFecha(j.ultimoRegistro) : 'Sin registros'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div onClick={() => verJugador(j)} style={{ color: '#a3e635', fontSize: 18, cursor: 'pointer' }}>→</div>
+                    <div onClick={() => eliminarJugador(j.id)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14 }}>🗑️</div>
+                  </div>
+                </div>
               ))
             )}
           </div>
         )}
 
-        {/* TAB BIBLIOTECA */}
         {tab === 'biblioteca' && (
           <div>
             {mensajeExito && (
@@ -463,7 +490,6 @@ export default function ManagerPage() {
               {mostrarFormBiblioteca ? '✕ Cancelar' : '+ Subir contenido'}
             </button>
 
-            {/* FORMULARIO SUBIR */}
             {mostrarFormBiblioteca && (
               <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 16, marginBottom: 20 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#a3e635', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Nuevo contenido</div>
@@ -516,11 +542,8 @@ export default function ManagerPage() {
               </div>
             )}
 
-            {/* LISTA BIBLIOTECA */}
             {biblioteca.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px', color: '#555', fontSize: 13 }}>
-                Todavía no subiste contenido.
-              </div>
+              <div style={{ textAlign: 'center', padding: '30px', color: '#555', fontSize: 13 }}>Todavía no subiste contenido.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {biblioteca.map((item, i) => (
@@ -541,7 +564,6 @@ export default function ManagerPage() {
         )}
       </div>
 
-      {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
           { icon: '👥', label: 'Jugadores', tab: 'jugadores' },

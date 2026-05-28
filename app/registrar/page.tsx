@@ -80,6 +80,7 @@ export default function RegistrarPage() {
   const [emocionesSeleccionadas, setEmocionesSeleccionadas] = useState<string[]>([])
   const [guardado, setGuardado] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [tiempoInicio] = useState<number>(Date.now())
   const [error, setError] = useState('')
   const [pensamientos, setPensamientos] = useState('')
   const [fraseAyudo, setFraseAyudo] = useState('')
@@ -125,6 +126,7 @@ async function guardar() {
     autodialogo: fraseAyudo,
     frase_ayudo: fraseAyudo,
     aprendizajes,
+    tiempo_segundos: Math.floor((Date.now() - tiempoInicio) / 1000),
   })
 
   setGuardando(false)
@@ -158,7 +160,7 @@ async function guardar() {
           <div onClick={() => router.push('/diario')} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 14, padding: '14px 16px', marginBottom: 20, cursor: 'pointer' }}>
   <span style={{ fontSize: 28 }}>💛</span>
   <div>
-    <div style={{ fontWeight: 700, fontSize: 14, color: '#facc15' }}>Banco de Confianza</div>
+    <div style={{ fontWeight: 700, fontSize: 14, color: '#facc15' }}>Nuevo: Banco de Confianza</div>
     <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Registrá y transformá tus pensamientos</div>
   </div>
   <div style={{ marginLeft: 'auto', color: '#facc15', fontSize: 18 }}>→</div>
@@ -179,7 +181,7 @@ async function guardar() {
         )}
 
         {/* TIPO */}
-        <div style={{ fontSize: 11, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Tipo de sesión</div>
+        <div style={{ fontSize: 11, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Empezá Aca! Tipo de sesión:</div>
         <div style={{ display: 'flex', gap: 8, marginBottom: tipo === 'Partido' ? 12 : 20 }}>
           {['Entrenamiento', 'Partido'].map(t => (
             <button key={t} onClick={() => { setTipo(t); setSubtipo('') }} style={{
