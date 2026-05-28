@@ -418,7 +418,7 @@ setTopFortalezas(Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 3))
 
 {topFortalezas.length > 0 && (
   <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
-    <div style={{ fontSize: 11, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>💪 Tus mayores fortalezas</div>
+    <div style={{ fontSize: 11, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>Tus mayores fortalezas</div>
     <div style={{ display: 'flex', gap: 6 }}>
       {topFortalezas.map(([fortaleza, cantidad], i) => {
         const iconMap: Record<string, string> = {

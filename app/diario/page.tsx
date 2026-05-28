@@ -110,7 +110,7 @@ export default function DiarioPage() {
       respuesta: 'Perder duele, y está bien que duela — significa que te importa. Pero una derrota no define lo que sos como jugador/a. Lo que hacés después de perder, sí. Messi tardó 15 años en ganar el mundial. '
     },
     {
-      palabras: ['nervioso', 'nerviosa', 'ansiedad', 'ansiosa', 'ansioso', 'miedo'],
+      palabras: ['nervioso', 'nerviosa', 'ansiedad', 'ansiosa', 'ansioso'],
       respuesta: 'Los nervios son una señal de que algo te importa. Tu cuerpo se está preparando para dar lo mejor. Respirá, confiá en lo que entrenaste — ya lo tenés adentro.'
     },
     {
@@ -137,6 +137,10 @@ export default function DiarioPage() {
       palabras: ['inferior', 'tonto', 'malo', 'burro', 'débil', 'debil', 'critica', 'crítica'],
       respuesta: 'La verdadera opinión que importa es la tuya, vos sabés todo lo que hacés y la opinión de otros es tan cambiante como un par de medias'
     },
+    {
+      palabras: ['miedo', 'susto', 'asustado', 'temor'],
+      respuesta: 'Ayrton Senna decía que cuando dejó de tener miedo fue cuando se preocupó de verdad. Porque cuando las cosas no provocan ese miedo necesario, es porque no nos importan.'
+    },
   ]
 
   await new Promise(resolve => setTimeout(resolve, 1200))
@@ -151,7 +155,7 @@ export default function DiarioPage() {
   }
 
   if (!reformulacionFinal) {
-    reformulacionFinal = 'Ese pensamiento que sentís es válido, pero no es toda la verdad. Lo que sentís hoy no define lo que podés mañana. Seguí apostando a vos — vale la pena.'
+    reformulacionFinal = 'Entiendo totalmente que te genere inseguridad, pero no es toda la verdad. Lo que sentís hoy no define lo que podés mañana. Seguí apostando a vos — yo te acompaño.'
   }
 
   setReformulacion(reformulacionFinal)
