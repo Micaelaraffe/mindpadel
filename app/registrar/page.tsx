@@ -155,6 +155,14 @@ async function guardar() {
         <div style={{ paddingBottom: 20 }}>
           <div style={{ fontWeight: 800, fontSize: 24, letterSpacing: '-0.02em' }}>Nuevo Registro</div>
           <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Registrá tu estado mental y emocional</div>
+          <div onClick={() => router.push('/diario')} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 14, padding: '14px 16px', marginBottom: 20, cursor: 'pointer' }}>
+  <span style={{ fontSize: 28 }}>💛</span>
+  <div>
+    <div style={{ fontWeight: 700, fontSize: 14, color: '#facc15' }}>Banco de Confianza</div>
+    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Registrá y transformá tus pensamientos</div>
+  </div>
+  <div style={{ marginLeft: 'auto', color: '#facc15', fontSize: 18 }}>→</div>
+</div>
         </div>
 
         {guardado && (
@@ -274,16 +282,17 @@ async function guardar() {
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
-          { icon: '🏠', label: 'Inicio', path: '/home', active: false },
-          { icon: '➕', label: 'Registrar', path: '/registrar', active: true },
-          { icon: '📊', label: 'Gráficos', path: '/graficos', active: false },
-          { icon: '📚', label: 'Biblioteca', path: '/biblioteca', active: false },
-        ].map((t, i) => (
-          <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
-            <span style={{ fontSize: 20 }}>{t.icon}</span>
-            <span style={{ fontSize: 10, color: t.active ? '#a3e635' : '#666' }}>{t.label}</span>
-          </div>
-        ))}
+  { icon: '🏠', label: 'Inicio', path: '/home' },
+{ icon: '➕', label: 'Registrar', path: '/registrar' },
+{ icon: '💛', label: 'Confianza', path: '/diario' },
+{ icon: '📊', label: 'Gráficos', path: '/graficos' },
+{ icon: '📚', label: 'Biblioteca', path: '/biblioteca' },
+].map((t, i) => (
+  <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
+    <span style={{ fontSize: 18 }}>{t.icon}</span>
+    <span style={{ fontSize: 9, color: t.path === '/registrar' ? '#a3e635' : '#666' }}>{t.label}</span>
+  </div>
+))}
       </div>
 
     </main>

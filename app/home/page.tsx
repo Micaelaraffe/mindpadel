@@ -157,6 +157,7 @@ export default function HomePage() {
   const [profile, setProfile] = useState<Profile>({ nombre: '', objetivo: '', insight_manager: '' })
   const [registros, setRegistros] = useState<Registro[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])
+  const [topFortalezas, setTopFortalezas] = useState<[string, number][]>([])
   const [loading, setLoading] = useState(true)
   const [editandoObjetivo, setEditandoObjetivo] = useState(false)
   const [objTemp, setObjTemp] = useState('')
@@ -191,7 +192,20 @@ export default function HomePage() {
       .eq('user_id', user.id)
       .order('fecha', { ascending: true })
     if (evs) setEventos(evs)
+const { data: diarios } = await supabase
+  .from('diario_confianza')
+  .select('fortalezas')
+  .eq('user_id', user.id)
 
+const conteo: Record<string, number> = {}
+diarios?.forEach(r => {
+  if (r.fortalezas) {
+    r.fortalezas.split(', ').forEach((f: string) => {
+      if (f) conteo[f] = (conteo[f] || 0) + 1
+    })
+  }
+})
+setTopFortalezas(Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 3))
     setLoading(false)
   }
 
@@ -402,6 +416,29 @@ export default function HomePage() {
   <div style={{ fontSize: 13, lineHeight: 1.5 }}>{profile.insight_manager || 'Tu psicóloga todavía no escribió un mensaje para vos.'}</div>
 </div>
 
+{topFortalezas.length > 0 && (
+  <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+    <div style={{ fontSize: 11, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>💪 Tus mayores fortalezas</div>
+    <div style={{ display: 'flex', gap: 6 }}>
+      {topFortalezas.map(([fortaleza, cantidad], i) => {
+        const iconMap: Record<string, string> = {
+          'Persistencia': '🔥', 'Valentía': '🦁', 'Foco': '🎯',
+          'Calma': '🌊', 'Creatividad': '💡', 'Liderazgo': '👑',
+          'Resiliencia': '💪', 'Actitud': '⚡', 'Compañerismo': '🤝',
+          'Inteligencia': '🧠', 'Constancia': '🌟', 'Técnica': '🎾',
+        }
+        return (
+          <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 20, padding: '5px 8px' }}>
+            <span style={{ fontSize: 13 }}>{iconMap[fortaleza] || '⭐'}</span>
+            <span style={{ fontSize: 11, color: '#f0f0f0' }}>{fortaleza}</span>
+            <span style={{ fontSize: 10, color: '#facc15', fontWeight: 700 }}>{cantidad}x</span>
+          </div>
+        )
+      })}
+    </div>
+  </div>
+)}
+
         {/* CALENDARIO */}
         <Calendario
           registros={registros}
@@ -475,16 +512,17 @@ export default function HomePage() {
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
-          { icon: '🏠', label: 'Inicio', path: '/home', active: true },
-          { icon: '➕', label: 'Registrar', path: '/registrar', active: false },
-          { icon: '📊', label: 'Gráficos', path: '/graficos', active: false },
-          { icon: '📚', label: 'Biblioteca', path: '/biblioteca', active: false },
-        ].map((t, i) => (
-          <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
-            <span style={{ fontSize: 20 }}>{t.icon}</span>
-            <span style={{ fontSize: 10, color: t.active ? '#a3e635' : '#666' }}>{t.label}</span>
-          </div>
-        ))}
+  { icon: '🏠', label: 'Inicio', path: '/home' },
+{ icon: '➕', label: 'Registrar', path: '/registrar' },
+{ icon: '💛', label: 'Confianza', path: '/diario' },
+{ icon: '📊', label: 'Gráficos', path: '/graficos' },
+{ icon: '📚', label: 'Biblioteca', path: '/biblioteca' },
+].map((t, i) => (
+  <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
+    <span style={{ fontSize: 18 }}>{t.icon}</span>
+    <span style={{ fontSize: 9, color: t.path === '/registrar' ? '#a3e635' : '#666' }}>{t.label}</span>
+  </div>
+))}
       </div>
 
     </main>

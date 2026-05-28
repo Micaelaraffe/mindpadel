@@ -194,6 +194,27 @@ export default function GraficosPage() {
           </>
         )}
 
+{/* FORTALEZAS BANCO DE CONFIANZA */}
+{(() => {
+  const listaFortalezas = [
+    { icon: '🔥', label: 'Persistencia' },
+    { icon: '🦁', label: 'Valentía' },
+    { icon: '🎯', label: 'Foco' },
+    { icon: '🌊', label: 'Calma' },
+    { icon: '💡', label: 'Creatividad' },
+    { icon: '👑', label: 'Liderazgo' },
+    { icon: '💪', label: 'Resiliencia' },
+    { icon: '⚡', label: 'Actitud' },
+    { icon: '🤝', label: 'Compañerismo' },
+    { icon: '🧠', label: 'Inteligencia' },
+    { icon: '🌟', label: 'Constancia' },
+    { icon: '🎾', label: 'Técnica' },
+  ]
+
+  const conteo: Record<string, number> = {}
+  // Esto se carga desde el estado — ver abajo
+  return null
+})()}
 {/* MOTIVACIÓN Y FRUSTRACIÓN */}
 {registros.length >= 2 && (() => {
   const datos = registros.map((r, i) => ({
@@ -343,6 +364,8 @@ export default function GraficosPage() {
     </div>
   )
 })()}
+
+
         {/* FRASES Y APRENDIZAJES */}
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 4 }}>✦ Mis frases y aprendizajes</div>
@@ -380,16 +403,17 @@ export default function GraficosPage() {
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
-          { icon: '🏠', label: 'Inicio', path: '/home', active: false },
-          { icon: '➕', label: 'Registrar', path: '/registrar', active: false },
-          { icon: '📊', label: 'Gráficos', path: '/graficos', active: true },
-          { icon: '📚', label: 'Biblioteca', path: '/biblioteca', active: false },
-        ].map((t, i) => (
-          <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
-            <span style={{ fontSize: 20 }}>{t.icon}</span>
-            <span style={{ fontSize: 10, color: t.active ? '#a3e635' : '#666' }}>{t.label}</span>
-          </div>
-        ))}
+  { icon: '🏠', label: 'Inicio', path: '/home' },
+{ icon: '➕', label: 'Registrar', path: '/registrar' },
+{ icon: '💛', label: 'Confianza', path: '/diario' },
+{ icon: '📊', label: 'Gráficos', path: '/graficos' },
+{ icon: '📚', label: 'Biblioteca', path: '/biblioteca' },
+].map((t, i) => (
+  <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
+    <span style={{ fontSize: 18 }}>{t.icon}</span>
+    <span style={{ fontSize: 9, color: t.path === '/registrar' ? '#a3e635' : '#666' }}>{t.label}</span>
+  </div>
+))}
       </div>
 
     </main>

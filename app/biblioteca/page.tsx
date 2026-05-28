@@ -163,16 +163,17 @@ export default function BibliotecaPage() {
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
-          { icon: '🏠', label: 'Inicio', path: '/home', active: false },
-          { icon: '➕', label: 'Registrar', path: '/registrar', active: false },
-          { icon: '📊', label: 'Gráficos', path: '/graficos', active: false },
-          { icon: '📚', label: 'Biblioteca', path: '/biblioteca', active: true },
-        ].map((t, i) => (
-          <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
-            <span style={{ fontSize: 20 }}>{t.icon}</span>
-            <span style={{ fontSize: 10, color: t.active ? '#a3e635' : '#666' }}>{t.label}</span>
-          </div>
-        ))}
+  { icon: '🏠', label: 'Inicio', path: '/home' },
+{ icon: '➕', label: 'Registrar', path: '/registrar' },
+{ icon: '💛', label: 'Confianza', path: '/diario' },
+{ icon: '📊', label: 'Gráficos', path: '/graficos' },
+{ icon: '📚', label: 'Biblioteca', path: '/biblioteca' },
+].map((t, i) => (
+  <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
+    <span style={{ fontSize: 18 }}>{t.icon}</span>
+    <span style={{ fontSize: 9, color: t.path === '/registrar' ? '#a3e635' : '#666' }}>{t.label}</span>
+  </div>
+))}
       </div>
 
     </main>
