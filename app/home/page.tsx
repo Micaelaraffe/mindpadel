@@ -108,10 +108,10 @@ function compartirSemana(mm: number, nivel: typeof NIVELES[0] | null, nombre: st
 
   ctx.font = '120px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillText('🎾🧠', 540, 480)
+  ctx.fillText('🏅', 540, 480)
 
   ctx.font = '80px system-ui'
-ctx.fillText('🏅', 540, 1480)
+ctx.fillText('🎾🧠🚀', 540, 1480)
 
   ctx.fillStyle = '#a3e635'
   ctx.font = 'bold 200px system-ui'
