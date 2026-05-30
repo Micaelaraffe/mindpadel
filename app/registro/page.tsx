@@ -181,13 +181,13 @@ const rendimiento = Number(registro.resultado) || 0
           </div>
         )}
 
-        <button onClick={() => router.push('/home')} style={{
-          width: '100%', background: 'rgba(255,255,255,0.05)', color: '#f0f0f0',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 15,
-          fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 8
-        }}>
-          ← Volver al inicio
-        </button>
+        <button onClick={() => router.push('/editar?id=' + registro.id)} style={{
+  width: '100%', background: 'rgba(163,230,53,0.1)', color: '#a3e635',
+  border: '1px solid rgba(163,230,53,0.3)', borderRadius: 14, padding: 15,
+  fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 8
+}}>
+  ✏️ Editar este registro
+</button>
 
       </div>
     </main>
