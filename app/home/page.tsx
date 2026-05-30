@@ -169,23 +169,7 @@ ctx.fillText('🏅', 540, 1480)
   ctx.font = '32px system-ui'
   ctx.fillText(semanaStr, 540, 1320)
 
-  ctx.fillStyle = 'rgba(163,230,53,0.12)'
-  ctx.beginPath()
-  ctx.roundRect(80, 1560, 920, 200, 20)
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(163,230,53,0.3)'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.roundRect(80, 1560, 920, 200, 20)
-  ctx.stroke()
-
-  ctx.fillStyle = '#a3e635'
-  ctx.font = 'bold 42px system-ui'
-  ctx.fillText('📸 Copiá esta imagen y', 540, 1630)
-  ctx.fillText('compartila en tus historias', 540, 1690)
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'
-  ctx.font = '30px system-ui'
-  ctx.fillText('mindpadel.vercel.app', 540, 1740)
+ 
 
   const link = document.createElement('a')
   link.download = 'mi-semana-mental.png'
