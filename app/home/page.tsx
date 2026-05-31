@@ -326,7 +326,11 @@ export default function HomePage() {
       })
     })
     setTopFortalezas(Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 3))
-
+if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+  (window as any).OneSignalDeferred.push(function(OneSignal: any) {
+    OneSignal.User.addTag('user_id', user.id)
+  })
+}
     setLoading(false)
   }
 
