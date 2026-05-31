@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY}`,
+      'Authorization': `Key ${process.env.ONESIGNAL_REST_API_KEY}`,
     },
     body: JSON.stringify(body),
   })
