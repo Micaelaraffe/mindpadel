@@ -10,6 +10,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [nombre, setNombre] = useState('')
   const [isRegister, setIsRegister] = useState(false)
+  const [nivel, setNivel] = useState('Amateur')
+const [categoria, setCategoria] = useState('4ta')
+const [telefono, setTelefono] = useState('')
+const [genero, setGenero] = useState('')
   const [aceptoTerminos, setAceptoTerminos] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -49,11 +53,22 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { nombre } }
-      })
+      const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
+  email,
+  password,
+  options: { data: { nombre } }
+})
+if (!signUpError && signUpData.user) {
+  await supabase.from('profiles').upsert({
+  id: signUpData.user.id,
+  nombre,
+  nivel,
+  categoria,
+  genero,
+  telefono,
+  role: 'player',
+})
+}
       if (signUpError) {
         setError(signUpError.message === 'User already registered'
           ? 'Ya existe una cuenta con ese email'
@@ -181,6 +196,64 @@ export default function LoginPage() {
             style={inputStyle}
           />
         )}
+
+{isRegister && role === 'player' && (
+  <>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Nivel</div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {['Amateur', 'Profesional'].map(n => (
+          <button key={n} type="button" onClick={() => setNivel(n)} style={{
+            flex: 1, padding: '10px',
+            background: nivel === n ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+            border: nivel === n ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, color: nivel === n ? '#a3e635' : '#888',
+            fontSize: 13, cursor: 'pointer', fontWeight: 600
+          }}>{n}</button>
+        ))}
+      </div>
+    </div>
+
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Categoría</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+        {['1ra', '2da', '3ra', '4ta', '5ta', '6ta', '7ma', '8va'].map(c => (
+          <button key={c} type="button" onClick={() => setCategoria(c)} style={{
+            padding: '10px 4px',
+            background: categoria === c ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+            border: categoria === c ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, color: categoria === c ? '#a3e635' : '#888',
+            fontSize: 13, cursor: 'pointer', fontWeight: 600
+          }}>{c}</button>
+        ))}
+      </div>
+    </div>
+    <div style={{ marginBottom: 12 }}>
+  <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Género</div>
+  <div style={{ display: 'flex', gap: 8 }}>
+    {['Hombre', 'Mujer', 'Otro'].map(g => (
+      <button key={g} type="button" onClick={() => setGenero(g)} style={{
+        flex: 1, padding: '10px',
+        background: genero === g ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+        border: genero === g ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 10, color: genero === g ? '#a3e635' : '#888',
+        fontSize: 13, cursor: 'pointer', fontWeight: 600
+      }}>{g}</button>
+    ))}
+  </div>
+</div>
+
+<div style={{ marginBottom: 16 }}>
+  <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Teléfono</div>
+  <input value={telefono} onChange={e => setTelefono(e.target.value)}
+    placeholder="Ej: +54 11 1234 5678"
+    style={inputStyle}
+  />
+</div>
+  </>
+)}
+
+
 
         <input value={email} onChange={e => setEmail(e.target.value)}
           placeholder="tu@email.com" type="email"

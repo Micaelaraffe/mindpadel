@@ -316,6 +316,16 @@ console.log('Respuesta notificacion:', JSON.stringify(dataNoti))
             <div>
               {jugadorSeleccionado.objetivo && (
                 <div style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 14, padding: 14, marginBottom: 16 }}>
+                  {(jugadorSeleccionado as any).nivel && (
+  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+    <div style={{ background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#a3e635' }}>
+      {(jugadorSeleccionado as any).nivel}
+    </div>
+    <div style={{ background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#a3e635' }}>
+      Categoría {(jugadorSeleccionado as any).categoria}
+    </div>
+  </div>
+)}
                   <div style={{ fontSize: 10, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontWeight: 700 }}>🎯 Objetivo del jugador</div>
                   <div style={{ fontSize: 13, lineHeight: 1.5 }}>{jugadorSeleccionado.objetivo}</div>
                 </div>
