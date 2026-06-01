@@ -156,6 +156,7 @@ export default function ManagerPage() {
   body: JSON.stringify({
     titulo: '✦ Nuevo mensaje de tu psicóloga',
     mensaje: 'Ps. Mica Raffe te dejó un mensaje personalizado. ¡Abrí la app para verlo!',
+    jugadorId: jugadorSeleccionado.id,
   })
 })
 const dataNoti = await resNoti.json()
