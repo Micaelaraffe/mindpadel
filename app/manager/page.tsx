@@ -150,6 +150,14 @@ export default function ManagerPage() {
       setMensajeExito('Error al guardar.')
     } else {
       setJugadores(prev => prev.map(j => j.id === jugadorSeleccionado.id ? { ...j, insight_manager: insight } : j))
+      await fetch('/api/notificacion', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    titulo: '✦ Nuevo mensaje de tu psicóloga',
+    mensaje: 'Ps. Mica Raffe te dejó un mensaje personalizado. ¡Abrí la app para verlo!',
+  })
+})
       setMensajeExito('Insight guardado ✓')
       setTimeout(() => setMensajeExito(''), 2000)
     }
