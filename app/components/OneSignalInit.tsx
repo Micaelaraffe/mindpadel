@@ -17,6 +17,25 @@ export default function OneSignalInit() {
         appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || '',
         notifyButton: { enable: false },
         allowLocalhostAsSecureOrigin: true,
+        promptOptions: {
+          slidedown: {
+            prompts: [
+              {
+                type: 'push',
+                autoPrompt: true,
+                text: {
+                  actionMessage: '🎾 Activá las notificaciones ayudarte a mantener tu progreso',
+                  acceptButton: '¡Activar!',
+                  cancelButton: 'Más tarde',
+                },
+                delay: {
+                  pageViews: 1,
+                  timeDelay: 3,
+                }
+              }
+            ]
+          }
+        }
       })
     })
 
