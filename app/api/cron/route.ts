@@ -19,14 +19,35 @@ export async function GET(req: NextRequest) {
     titulo = '📊 ¿Cómo fue tu semana?'
     mensaje = 'Viernes de balance mental 🎾 Si no registraste tus sesiones esta semana, ¡todavía estás a tiempo!'
   } else {
-    return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
+    return NextResponse.json({ error: 'Tipo invalido' }, { status: 400 })
   }
 
   const apiKey = process.env.ONESIGNAL_REST_API_KEY || ''
   const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || ''
+  const authHeader = apiKey.startsWith('os_v2') ? 'Key ' + apiKey : 'Basic ' + apiKey
 
-  // Intentar con Key prefix (nuevo formato)
-  const response = await fetch('https://onesignal.com/api/v1/notifications', {
+  const res = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
-      'Content-Ty
+      'Content-Type': 'application/json',
+      'Authorization': authHeader,
+    },
+    body: JSON.stringify({
+      app_id: appId,
+      included_segments: ['All'],
+      headings: { en: titulo, es: titulo },
+      contents: { en: mensaje, es: mensaje },
+    }),
+  })
+
+  const data = await res.json()
+
+  return NextResponse.json({
+    ok: true,
+    data,
+    debug: {
+      keyPrefix: apiKey.substring(0, 15),
+      appId: appId.substring(0, 8),
+    }
+  })
+}
