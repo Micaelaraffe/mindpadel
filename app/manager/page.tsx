@@ -150,7 +150,7 @@ export default function ManagerPage() {
       setMensajeExito('Error al guardar.')
     } else {
       setJugadores(prev => prev.map(j => j.id === jugadorSeleccionado.id ? { ...j, insight_manager: insight } : j))
-      await fetch('/api/notificacion', {
+     const resNoti = await fetch('/api/notificacion', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -158,6 +158,8 @@ export default function ManagerPage() {
     mensaje: 'Ps. Mica Raffe te dejó un mensaje personalizado. ¡Abrí la app para verlo!',
   })
 })
+const dataNoti = await resNoti.json()
+console.log('Respuesta notificacion:', JSON.stringify(dataNoti))
       setMensajeExito('Insight guardado ✓')
       setTimeout(() => setMensajeExito(''), 2000)
     }
