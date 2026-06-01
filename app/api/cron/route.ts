@@ -22,20 +22,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
   }
 
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY || ''
+  const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || ''
+
+  // Intentar con Key prefix (nuevo formato)
   const response = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY}`,
-    },
-    body: JSON.stringify({
-      app_id: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-      included_segments: ['All'],
-      headings: { en: titulo, es: titulo },
-      contents: { en: mensaje, es: mensaje },
-    }),
-  })
-
-  const data = await response.json()
-  return NextResponse.json({ ok: true, data })
-}
+      'Content-Ty
