@@ -154,9 +154,22 @@ export default function DiarioPage() {
     }
   }
 
-  if (!reformulacionFinal) {
-    reformulacionFinal = 'Entiendo totalmente que te genere inseguridad, pero no es toda la verdad. Lo que sentís hoy no define lo que podés mañana. Seguí apostando a vos — yo te acompaño.'
-  }
+  const frasesVacias = ['no', 'nada', 'ninguno', 'ninguna', 'hoy no', 'no sé', 'nose', 'sin pensamientos', 'bien', 'todo bien', 'ok', 'nada hoy', 'no tengo']
+
+const esVacio = frasesVacias.some(f => texto.trim().toLowerCase() === f) || texto.trim().length < 5
+
+if (esVacio) {
+  const frasesPositivas = [
+    'Que no haya pensamientos de inseguridad puede darte paz. Seguí construyendo desde ese lugar.',
+    'A veces la mente descansa y eso también es parte del proceso. Bien por vos.',
+    'Sin ruido mental hoy — eso es más valioso de lo que parece. Aprovechalo.',
+    'No siempre hay que batallar con pensamientos difíciles. Hoy simplemente estás. Y está bien.',
+    'Un día sin inseguridades es un depósito enorme. Guardalo bien.',
+  ]
+  reformulacionFinal = frasesPositivas[Math.floor(Math.random() * frasesPositivas.length)]
+} else if (!reformulacionFinal) {
+  reformulacionFinal = 'Lo que sentís hoy no define lo que podés mañana. Seguí apostando a vos — vale la pena.'
+}
 
   setReformulacion(reformulacionFinal)
   setCargandoIA(false)
