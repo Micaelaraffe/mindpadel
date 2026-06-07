@@ -53,6 +53,7 @@ export default function DiarioPage() {
   const [totalRegistros, setTotalRegistros] = useState(0)
   const [historialFortalezas, setHistorialFortalezas] = useState<Record<string, number>>({})
   const [error, setError] = useState('')
+  const [logro, setLogro] = useState('')
   const [mostrarInfo, setMostrarInfo] = useState(false)
   const [tesoroAbierto, setTesoroAbierto] = useState(false)
 
@@ -125,7 +126,7 @@ export default function DiarioPage() {
     const { error: insertError } = await supabase.from('diario_confianza').insert({
       user_id: user.id,
       nivel_confianza: nivelConfianza,
-      logro: '',
+      logro,
       fortalezas: fortalezasSeleccionadas.join(', '),
       pensamiento_negativo: pensamientoNegativo,
       reformulacion_ia: reformulacion,
@@ -315,7 +316,7 @@ export default function DiarioPage() {
 
           {/* P1 CONFIANZA */}
           <div style={{ background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 12, padding: 14, marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>¿Cómo llegás hoy?</div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>¿Cómo está tu confianza hoy?</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 32 }}>{emojiConfianza(nivelConfianza)}</span>
               <div style={{ flex: 1 }}>
@@ -331,9 +332,19 @@ export default function DiarioPage() {
             </div>
           </div>
 
+{/* LOGRO */}
+<div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 8 }}>
+  <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>¿Qué hiciste bien hoy?</div>
+  <div style={{ fontSize: 11, color: '#555', marginBottom: 10 }}>Aunque sea chiquito, escribí algo que pudiste hacer</div>
+  <textarea value={logro} onChange={e => setLogro(e.target.value)}
+    placeholder="Hoy hice bien..."
+    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 12px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 60, lineHeight: 1.5, boxSizing: 'border-box', fontFamily: 'system-ui' }}
+  />
+</div>
+
           {/* P2 FORTALEZAS */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>¿Qué fortaleza mostró tu juego hoy?</div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>¿Qué fortalezas tuviste hoy?</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
               {fortalezas.map(f => (
                 <div key={f.label} onClick={() => toggleFortaleza(f.label)} style={{
@@ -354,7 +365,7 @@ export default function DiarioPage() {
           {/* P3 PENSAMIENTO */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <div style={{ fontSize: 12, color: '#888' }}>¿Algo que te frena? Escribilo y quemalo 🔥</div>
+              <div style={{ fontSize: 12, color: '#888' }}>¿Pensamiento de inseguridad? Escribilo sin filtro 🔥</div>
               <div style={{ fontSize: 10, color: '#555', background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '3px 8px', flexShrink: 0 }}>opcional</div>
             </div>
             <textarea value={pensamientoNegativo} onChange={e => { setPensamientoNegativo(e.target.value); setReformulacion('') }}
