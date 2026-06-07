@@ -507,10 +507,22 @@ export default function HomePage() {
   )
 
   return (
-    <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
+  <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%', position: 'relative', overflow: 'hidden' }}>
+
+    {/* FONDO CÍRCULOS DIFUSOS */}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', top: '-80px', right: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(163,230,53,0.05)' }}></div>
+      <div style={{ position: 'absolute', top: '200px', right: '-100px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(163,230,53,0.03)' }}></div>
+      <div style={{ position: 'absolute', top: '400px', left: '-80px', width: '250px', height: '250px', borderRadius: '50%', background: 'rgba(163,230,53,0.04)' }}></div>
+      <div style={{ position: 'absolute', top: '700px', right: '-50px', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(250,204,21,0.03)' }}></div>
+      <div style={{ position: 'absolute', top: '900px', left: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(163,230,53,0.03)' }}></div>
+    </div>
+
 
       {/* MODAL EVENTO */}
+      <div style={{ position: 'relative', zIndex: 1 }}>
       {modalEvento && (
+        
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           onClick={() => setModalEvento(null)}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#111', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 390 }}>
@@ -880,7 +892,7 @@ export default function HomePage() {
           </div>
         ))}
       </div>
-
+</div>
     </main>
   )
 }
