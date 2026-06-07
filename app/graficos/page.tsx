@@ -194,27 +194,7 @@ export default function GraficosPage() {
           </>
         )}
 
-{/* FORTALEZAS BANCO DE CONFIANZA */}
-{(() => {
-  const listaFortalezas = [
-    { icon: '🔥', label: 'Persistencia' },
-    { icon: '🦁', label: 'Valentía' },
-    { icon: '🎯', label: 'Foco' },
-    { icon: '🌊', label: 'Calma' },
-    { icon: '💡', label: 'Creatividad' },
-    { icon: '👑', label: 'Liderazgo' },
-    { icon: '💪', label: 'Resiliencia' },
-    { icon: '⚡', label: 'Actitud' },
-    { icon: '🤝', label: 'Compañerismo' },
-    { icon: '🧠', label: 'Inteligencia' },
-    { icon: '🌟', label: 'Constancia' },
-    { icon: '🎾', label: 'Técnica' },
-  ]
 
-  const conteo: Record<string, number> = {}
-  // Esto se carga desde el estado — ver abajo
-  return null
-})()}
 {/* MOTIVACIÓN Y FRUSTRACIÓN */}
 {registros.length >= 2 && (() => {
   const datos = registros.map((r, i) => ({
@@ -318,7 +298,7 @@ export default function GraficosPage() {
     { metrica: 'Activación', Partidos: zorPartidos.activacion, Entrenos: zorEntrenos.activacion },
     { metrica: 'Concentración', Partidos: zorPartidos.concentracion, Entrenos: zorEntrenos.concentracion },
     { metrica: 'Confianza', Partidos: zorPartidos.confianza, Entrenos: zorEntrenos.confianza },
-    { metrica: 'Desafío', Partidos: zorPartidos.desafio, Entrenos: zorEntrenos.desafio },
+    { metrica: 'Dificultad', Partidos: zorPartidos.desafio, Entrenos: zorEntrenos.desafio },
   ]
 
   return (

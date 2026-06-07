@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false)
   const [nivel, setNivel] = useState('Amateur')
 const [categoria, setCategoria] = useState('4ta')
+const [fechaNacimiento, setFechaNacimiento] = useState('')
 const [telefono, setTelefono] = useState('')
 const [genero, setGenero] = useState('')
   const [aceptoTerminos, setAceptoTerminos] = useState(false)
@@ -66,6 +67,7 @@ if (!signUpError && signUpData.user) {
   categoria,
   genero,
   telefono,
+  fecha_nacimiento: fechaNacimiento || null,
   role: 'player',
 })
 }
@@ -241,6 +243,13 @@ if (!signUpError && signUpData.user) {
       }}>{g}</button>
     ))}
   </div>
+</div>
+
+<div style={{ marginBottom: 12 }}>
+  <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Fecha de nacimiento</div>
+  <input type="date" value={fechaNacimiento} onChange={e => setFechaNacimiento(e.target.value)}
+    style={{ ...inputStyle, colorScheme: 'dark' }}
+  />
 </div>
 
 <div style={{ marginBottom: 16 }}>

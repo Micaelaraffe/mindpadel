@@ -245,7 +245,7 @@ async function guardar() {
           <Slider label="Concentración" value={zor.concentracion} onChange={v => setZor({ ...zor, concentracion: v })} />
           <Slider label="Activación" value={zor.activacion} onChange={v => setZor({ ...zor, activacion: v })} />
           <Slider label="Confianza" value={zor.confianza} onChange={v => setZor({ ...zor, confianza: v })} />
-          <Slider label="Desafío percibido" value={zor.desafio} onChange={v => setZor({ ...zor, desafio: v })} />
+          <Slider label="¿Qué tan difícil lo sentiste?" value={zor.desafio} onChange={v => setZor({ ...zor, desafio: v })} />
           <Slider label="Motivación" value={zor.motivacion} onChange={v => setZor({ ...zor, motivacion: v })} />
           <Slider label="Frustración" value={zor.frustracion} onChange={v => setZor({ ...zor, frustracion: v })} />
         </div>

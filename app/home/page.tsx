@@ -23,6 +23,9 @@ type Profile = {
   nombre: string
   objetivo: string
   insight_manager: string
+  nivel: string
+  categoria: string
+  fecha_nacimiento: string
 }
 
 type Evento = {
@@ -41,7 +44,7 @@ const NIVELES = [
   { mm: 10, nombre: 'Grow Mental', icon: '🌱' },
   { mm: 50, nombre: 'Power Mental', icon: '⚡' },
   { mm: 100, nombre: 'Focus Mode', icon: '🎯' },
-  { mm: 175, nombre: 'Mente fuerte', icon: '🦁' },
+  { mm: 175, nombre: 'Mental Warrior', icon: '🦁' },
   { mm: 260, nombre: 'Mental Beast', icon: '🔥' },
   { mm: 350, nombre: 'Élite Mental', icon: '👑' },
 ]
@@ -73,14 +76,13 @@ function calcularMMSemana(registros: Registro[], diariosConFecha: DiarioFecha[])
 }
 
 function calcularMMHistorico(registros: Registro[], totalDepositos: number) {
-  const mm = registros.reduce((total, r) => {
+  return registros.reduce((total, r) => {
     let puntos = 10
     if (r.pensamientos && r.pensamientos.trim().length > 10) puntos += 5
     if (r.frase_ayudo && r.frase_ayudo.trim().length > 3) puntos += 2
     if (r.aprendizajes && r.aprendizajes.trim().length > 3) puntos += 3
     return total + puntos
   }, 0) + (totalDepositos * 15)
-  return mm
 }
 
 function compartirSemana(mm: number, nivel: typeof NIVELES[0] | null, nombre: string) {
@@ -108,10 +110,7 @@ function compartirSemana(mm: number, nivel: typeof NIVELES[0] | null, nombre: st
 
   ctx.font = '120px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillText('🏅', 540, 480)
-
-  ctx.font = '80px system-ui'
-ctx.fillText('🎾🧠🚀', 540, 1480)
+  ctx.fillText('🧠🎾', 540, 480)
 
   ctx.fillStyle = '#a3e635'
   ctx.font = 'bold 200px system-ui'
@@ -164,12 +163,14 @@ ctx.fillText('🎾🧠🚀', 540, 1480)
   const domingo = new Date(lunes)
   domingo.setDate(lunes.getDate() + 6)
   const semanaStr = lunes.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) +
-    ' — ' + domingo.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
+    ' - ' + domingo.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
   ctx.fillStyle = 'rgba(255,255,255,0.2)'
   ctx.font = '32px system-ui'
   ctx.fillText(semanaStr, 540, 1320)
 
- 
+  ctx.fillStyle = 'rgba(255,255,255,0.2)'
+ctx.font = '32px system-ui'
+ctx.fillText('mindpadel.vercel.app', 540, 1600)
 
   const link = document.createElement('a')
   link.download = 'mi-semana-mental.png'
@@ -177,9 +178,7 @@ ctx.fillText('🎾🧠🚀', 540, 1480)
   link.click()
 }
 
-function Calendario({
-  registros, eventos, onAgregarEvento,
-}: {
+function Calendario({ registros, eventos, onAgregarEvento }: {
   registros: Registro[]
   eventos: Evento[]
   onAgregarEvento: (fecha: string) => void
@@ -187,6 +186,7 @@ function Calendario({
   const hoy = new Date()
   const [mes, setMes] = useState(hoy.getMonth())
   const [anio, setAnio] = useState(hoy.getFullYear())
+  const [abierto, setAbierto] = useState(false)
 
   const diasEnMes = new Date(anio, mes + 1, 0).getDate()
   const primerDia = new Date(anio, mes, 1).getDay()
@@ -228,61 +228,70 @@ function Calendario({
   for (let i = 1; i <= diasEnMes; i++) celdas.push(i)
 
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div onClick={() => cambiarMes(-1)} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#888' }}>‹</div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f0f0', textTransform: 'capitalize' }}>{nombreMes}</div>
-        <div onClick={() => cambiarMes(1)} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#888' }}>›</div>
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
+      <div onClick={() => setAbierto(!abierto)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', cursor: 'pointer' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#888' }}>📅 Calendario</div>
+        <div style={{ fontSize: 12, color: '#555', transform: abierto ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
-          <div key={i} style={{ textAlign: 'center', fontSize: 10, color: '#555', fontWeight: 600, padding: '4px 0' }}>{d}</div>
-        ))}
-      </div>
+      {abierto && (
+        <div style={{ padding: '0 16px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div onClick={() => cambiarMes(-1)} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#888' }}>‹</div>
+            <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'capitalize' }}>{nombreMes}</div>
+            <div onClick={() => cambiarMes(1)} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#888' }}>›</div>
+          </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-        {celdas.map((dia, i) => {
-          if (!dia) return <div key={i}></div>
-          const esHoy = dia === hoy.getDate() && mes === hoy.getMonth() && anio === hoy.getFullYear()
-          const tieneRegistro = diasConRegistro.has(dia)
-          const tieneEvento = diasConEvento.has(dia)
-          const esFuturo = new Date(anio, mes, dia) > hoy
-          return (
-            <div key={i} onClick={() => esFuturo && onAgregarEvento(formatFechaParaEvento(dia))} style={{
-              position: 'relative', textAlign: 'center', padding: '6px 2px', borderRadius: 8,
-              cursor: esFuturo ? 'pointer' : 'default',
-              background: esHoy ? 'rgba(163,230,53,0.15)' : tieneEvento ? 'rgba(250,204,21,0.08)' : 'transparent',
-              border: esHoy ? '1px solid rgba(163,230,53,0.4)' : '1px solid transparent',
-            }}>
-              <div style={{ fontSize: 12, color: esHoy ? '#a3e635' : tieneRegistro ? '#f0f0f0' : '#555', fontWeight: esHoy ? 700 : 400 }}>{dia}</div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 2 }}>
-                {tieneRegistro && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#a3e635' }}></div>}
-                {tieneEvento && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#facc15' }}></div>}
-              </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
+            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: 10, color: '#555', fontWeight: 600, padding: '4px 0' }}>{d}</div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+            {celdas.map((dia, i) => {
+              if (!dia) return <div key={i}></div>
+              const esHoy = dia === hoy.getDate() && mes === hoy.getMonth() && anio === hoy.getFullYear()
+              const tieneRegistro = diasConRegistro.has(dia)
+              const tieneEvento = diasConEvento.has(dia)
+              const esFuturo = new Date(anio, mes, dia) > hoy
+              return (
+                <div key={i} onClick={() => esFuturo && onAgregarEvento(formatFechaParaEvento(dia))} style={{
+                  textAlign: 'center', padding: '6px 2px', borderRadius: 8,
+                  cursor: esFuturo ? 'pointer' : 'default',
+                  background: esHoy ? 'rgba(163,230,53,0.15)' : tieneEvento ? 'rgba(250,204,21,0.08)' : 'transparent',
+                  border: esHoy ? '1px solid rgba(163,230,53,0.4)' : '1px solid transparent',
+                }}>
+                  <div style={{ fontSize: 12, color: esHoy ? '#a3e635' : tieneRegistro ? '#f0f0f0' : '#555', fontWeight: esHoy ? 700 : 400 }}>{dia}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 2 }}>
+                    {tieneRegistro && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#a3e635' }}></div>}
+                    {tieneEvento && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#facc15' }}></div>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div style={{ display: 'flex', gap: 14, marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635' }}></div>
+              <span style={{ fontSize: 10, color: '#666' }}>Registros</span>
             </div>
-          )
-        })}
-      </div>
-
-      <div style={{ display: 'flex', gap: 14, marginTop: 12, paddingTop: 10, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#a3e635' }}></div>
-          <span style={{ fontSize: 10, color: '#666' }}>Registros</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#facc15' }}></div>
+              <span style={{ fontSize: 10, color: '#666' }}>Eventos</span>
+            </div>
+            <div style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>Tocá un día futuro para agendar</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#facc15' }}></div>
-          <span style={{ fontSize: 10, color: '#666' }}>Eventos</span>
-        </div>
-        <div style={{ fontSize: 10, color: '#555', marginLeft: 'auto' }}>Tocá un día futuro para agendar</div>
-      </div>
+      )}
     </div>
   )
 }
 
 export default function HomePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<Profile>({ nombre: '', objetivo: '', insight_manager: '' })
+  const [profile, setProfile] = useState<Profile>({ nombre: '', objetivo: '', insight_manager: '', nivel: '', categoria: '', fecha_nacimiento: '' })
   const [registros, setRegistros] = useState<Registro[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
@@ -294,6 +303,14 @@ export default function HomePage() {
   const [topFortalezas, setTopFortalezas] = useState<[string, number][]>([])
   const [depositosBancoHome, setDepositosBancoHome] = useState(0)
   const [diariosConFecha, setDiariosConFecha] = useState<DiarioFecha[]>([])
+  const [pregunta, setPregunta] = useState<{id: string, pregunta: string, opciones: string[]} | null>(null)
+  const [respuestas, setRespuestas] = useState<Record<string, number>>({})
+  const [miRespuesta, setMiRespuesta] = useState<string | null>(null)
+  const [votando, setVotando] = useState(false)
+  const [preguntaAbierta, setPreguntaAbierta] = useState(false)
+  const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [nivelTemp, setNivelTemp] = useState('')
+  const [categoriaTemp, setCategoriaTemp] = useState('')
 
   useEffect(() => { loadData() }, [])
 
@@ -302,8 +319,13 @@ export default function HomePage() {
     if (!user) { router.push('/'); return }
 
     const { data: prof } = await supabase
-      .from('profiles').select('nombre, objetivo, insight_manager').eq('id', user.id).single()
-    if (prof) { setProfile(prof); setObjTemp(prof.objetivo || '') }
+      .from('profiles').select('nombre, objetivo, insight_manager, nivel, categoria, fecha_nacimiento').eq('id', user.id).single()
+    if (prof) {
+      setProfile(prof)
+      setObjTemp(prof.objetivo || '')
+      setNivelTemp(prof.nivel || '')
+      setCategoriaTemp(prof.categoria || '')
+    }
 
     const { data: regs } = await supabase
       .from('registros').select('*').eq('user_id', user.id)
@@ -326,11 +348,34 @@ export default function HomePage() {
       })
     })
     setTopFortalezas(Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 3))
-if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
-  (window as any).OneSignalDeferred.push(function(OneSignal: any) {
-    OneSignal.User.addTag('user_id', user.id)
-  })
-}
+
+    if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+      (window as any).OneSignalDeferred.push(function(OneSignal: any) {
+        OneSignal.User.addTag('user_id', user.id)
+      })
+    }
+
+    const { data: preguntas } = await supabase
+      .from('preguntas_dia').select('*').eq('activa', true).order('created_at', { ascending: true })
+
+    if (preguntas && preguntas.length > 0) {
+      const diasDesde2024 = Math.floor((Date.now() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24))
+      const indice = Math.floor(diasDesde2024 / 3) % preguntas.length
+      const preguntaActual = preguntas[indice]
+      setPregunta(preguntaActual)
+
+      const { data: resps } = await supabase
+        .from('respuestas_pregunta').select('opcion').eq('pregunta_id', preguntaActual.id)
+      const conteoResps: Record<string, number> = {}
+      resps?.forEach(r => { conteoResps[r.opcion] = (conteoResps[r.opcion] || 0) + 1 })
+      setRespuestas(conteoResps)
+
+      const { data: miVoto } = await supabase
+        .from('respuestas_pregunta').select('opcion')
+        .eq('pregunta_id', preguntaActual.id).eq('user_id', user.id).single()
+      if (miVoto) { setMiRespuesta(miVoto.opcion); setPreguntaAbierta(true) }
+    }
+
     setLoading(false)
   }
 
@@ -341,6 +386,18 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
     setProfile({ ...profile, objetivo: objTemp })
     setEditandoObjetivo(false)
   }
+
+  async function guardarPerfil() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('profiles').update({ 
+    nivel: nivelTemp, 
+    categoria: categoriaTemp,
+    fecha_nacimiento: profile.fecha_nacimiento || null,
+  }).eq('id', user.id)
+  setProfile({ ...profile, nivel: nivelTemp, categoria: categoriaTemp })
+  setEditandoPerfil(false)
+}
 
   async function guardarEvento() {
     if (!nuevoEvento.titulo.trim() || !modalEvento) return
@@ -357,11 +414,40 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
   }
 
   async function eliminarRegistro(id: string) {
-    const confirmar = window.confirm('¿Seguro que querés eliminar este registro? Esta acción no se puede deshacer.')
+    const confirmar = window.confirm('¿Seguro que querés eliminar este registro?')
     if (!confirmar) return
     await supabase.from('registros').delete().eq('id', id)
     setRegistros(registros.filter(r => r.id !== id))
   }
+
+  async function votar(opcion: string) {
+  if (!pregunta || miRespuesta || votando) return
+  setVotando(true)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  await fetch('/api/votar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ preguntaId: pregunta.id, opcion, userId: user.id })
+  })
+
+  await supabase.from('diario_confianza').insert({
+    user_id: user.id,
+    nivel_confianza: 5,
+    logro: 'Respondio la pregunta del dia',
+    fortalezas: '',
+    pensamiento_negativo: '',
+    reformulacion_ia: '',
+    tiempo_segundos: 0,
+  })
+
+  setDepositosBancoHome(prev => prev + 1)
+  setDiariosConFecha(prev => [...prev, { created_at: new Date().toISOString(), fortalezas: '' }])
+  setMiRespuesta(opcion)
+  setRespuestas(prev => ({ ...prev, [opcion]: (prev[opcion] || 0) + 1 }))
+  setVotando(false)
+}
 
   async function cerrarSesion() {
     await supabase.auth.signOut()
@@ -376,6 +462,8 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
   const mmHistorico = calcularMMHistorico(registros, depositosBancoHome)
   const progresoPct = Math.min(100, (mmSemana / META_SEMANAL) * 100)
   const nivelActual = [...NIVELES].reverse().find(n => mmHistorico >= n.mm) || null
+  const nivelSiguiente = NIVELES.find(n => n.mm > mmHistorico) || null
+  const nivelSemanal = [...NIVELES].reverse().find(n => mmSemana >= n.mm) || null
 
   const hoy = new Date()
   hoy.setHours(0, 0, 0, 0)
@@ -387,7 +475,7 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
     const diff = Math.floor((ahora.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
     if (diff === 0) return 'Hoy'
     if (diff === 1) return 'Ayer'
-    return 'Hace ' + diff + ' días'
+    return 'Hace ' + diff + ' dias'
   }
 
   function formatFechaEvento(fecha: string) {
@@ -415,9 +503,7 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a3e635', fontFamily: 'system-ui, sans-serif' }}>
-      Cargando...
-    </div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a3e635', fontFamily: 'system-ui' }}>Cargando...</div>
   )
 
   return (
@@ -445,11 +531,11 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
               ))}
             </div>
             <input value={nuevoEvento.titulo} onChange={e => setNuevoEvento({ ...nuevoEvento, titulo: e.target.value })}
-              placeholder="Descripción (opcional)"
+              placeholder="Descripcion (opcional)"
               style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', color: '#f0f0f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'system-ui', marginBottom: 16 }}
             />
             <button onClick={guardarEvento} disabled={guardandoEvento} style={{ width: '100%', background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-              {guardandoEvento ? 'Guardando...' : '📌 Agendar'}
+              {guardandoEvento ? 'Guardando...' : 'Agendar'}
             </button>
             <button onClick={() => setModalEvento(null)} style={{ width: '100%', background: 'transparent', color: '#666', border: 'none', padding: '12px', fontSize: 13, cursor: 'pointer', marginTop: 6 }}>Cancelar</button>
           </div>
@@ -471,161 +557,195 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
 
         {/* SALUDO */}
         <div style={{ paddingBottom: 4 }}>
-          <div style={{ display: 'inline-block', background: 'rgba(163,230,53,0.12)', color: '#a3e635', fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px solid rgba(163,230,53,0.25)', marginBottom: 8 }}>
-            ✦ {new Date().toLocaleDateString('es-AR', { weekday: 'long' })}
+          <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>
+            {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
-          <div style={{ fontWeight: 800, fontSize: 28, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+          <div style={{ fontWeight: 800, fontSize: 26, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
             Hola, {profile.nombre.split(' ')[0]} 👋
-          </div>
-          <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
-            {new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
         </div>
 
         {/* RECORRIDO MENTAL */}
-<div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(250,204,21,0.2)', borderRadius: 16, padding: 14, marginTop: 16, marginBottom: 16 }}>
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-    <div>
-      <div style={{ fontSize: 10, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 3 }}>🧠 Tu recorrido mental semanal</div>
-      <div style={{ fontSize: 11, color: '#666', lineHeight: 1.4, maxWidth: 190 }}>Cada registro suma Minutos Mentales (MM). Se reinicia cada lunes.</div>
-    </div>
-    <div style={{ textAlign: 'right' }}>
-      <div style={{ fontWeight: 900, fontSize: 26, color: '#facc15', lineHeight: 1 }}>{mmSemana}</div>
-      <div style={{ fontSize: 9, color: '#666', marginTop: 2 }}>MM esta semana</div>
-    </div>
-  </div>
-
-  {/* BARRA */}
-  <div style={{ marginBottom: 10 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <span style={{ fontSize: 14 }}>
-          {mmSemana === 0 ? '🌱' :
-           mmSemana < 50 ? '⚡' :
-           mmSemana < 100 ? '🎯' :
-           mmSemana < 175 ? '🦁' :
-           mmSemana < 260 ? '🔥' : '👑'}
-        </span>
-        <span style={{ fontSize: 11, color: '#facc15', fontWeight: 600 }}>
-          {mmSemana === 0 ? 'Arrancá tu semana' :
-           mmSemana < 50 ? 'Comenzando' :
-           mmSemana < 100 ? 'Avanzando' :
-           mmSemana < 175 ? 'Buen ritmo' :
-           mmSemana < 260 ? 'Mente fuerte' :
-           mmSemana < 350 ? '¡Casi élite!' : '👑 Semana élite'}
-        </span>
-      </div>
-      <span style={{ fontSize: 10, color: '#888' }}>{mmSemana}/{META_SEMANAL} MM</span>
-    </div>
-    <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-      <div style={{
-        height: '100%', width: progresoPct + '%',
-        background: progresoPct >= 100
-          ? 'linear-gradient(90deg, #facc15, #f59e0b)'
-          : 'linear-gradient(90deg, #888, #facc15)',
-        borderRadius: 4, transition: 'width 1s ease',
-      }}></div>
-    </div>
-  </div>
-
-  {/* NIVEL HISTÓRICO */}
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(250,204,21,0.06)', borderRadius: 10, padding: '8px 12px', marginBottom: 10 }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 16 }}>{nivelActual?.icon || '🌱'}</span>
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#f0f0f0' }}>{nivelActual?.nombre || 'Sin nivel aún'}</div>
-        <div style={{ fontSize: 9, color: '#666', marginTop: 1 }}>Nivel histórico · {mmHistorico} MM totales</div>
-      </div>
-    </div>
-  </div>
-
-  {/* INSIGNIAS */}
-  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '0.5px solid rgba(255,255,255,0.06)', marginBottom: 10 }}>
-    {NIVELES.map((n, i) => (
-      <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-        <span style={{ fontSize: 14, opacity: mmHistorico >= n.mm ? 1 : 0.2 }}>{n.icon}</span>
-        <div style={{ width: 4, height: 4, borderRadius: '50%', background: mmHistorico >= n.mm ? '#facc15' : 'rgba(255,255,255,0.1)' }}></div>
-      </div>
-    ))}
-  </div>
-
-  <button onClick={() => compartirSemana(mmSemana, nivelActual, profile.nombre.split(' ')[0])} style={{
-    width: '100%', background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)',
-    borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 600,
-    color: '#facc15', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-  }}>
-    Compartir Logro en Redes 🎉🌐
-  </button>
-</div>
-
-        {/* OBJETIVO */}
-        <div style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>🎯 Objetivo actual</div>
-            <div onClick={() => { setObjTemp(profile.objetivo); setEditandoObjetivo(true) }} style={{ fontSize: 11, color: '#a3e635', cursor: 'pointer' }}>Editar</div>
-          </div>
-          {editandoObjetivo ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <textarea value={objTemp} onChange={e => setObjTemp(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(163,230,53,0.3)', borderRadius: 8, padding: '10px 12px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 60, boxSizing: 'border-box', fontFamily: 'system-ui' }}
-              />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={guardarObjetivo} style={{ flex: 1, background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 8, padding: '8px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Guardar</button>
-                <button onClick={() => setEditandoObjetivo(false)} style={{ flex: 1, background: 'transparent', color: '#888', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+        <div style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 16, padding: 16, marginTop: 14, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: 10, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>🧠 Tu Recorrido Mental Semanal</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginTop: 4 }}>
+                {mmSemana === 0 ? 'Grow Mental' :
+                 mmSemana < 50 ? 'Mental Power ⚡' :
+                 mmSemana < 100 ? 'Focus Mode 🎯' :
+                 mmSemana < 175 ? 'Mental Warrior 🦁' :
+                 mmSemana < 260 ? 'Mental Beast 🔥' : 'Semana elite 👑'}
               </div>
+              <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>Cada acción te suma Minutos Mentales MM - Reinicia los lunes</div>
             </div>
-          ) : (
-            <div style={{ fontSize: 14, lineHeight: 1.5, color: profile.objetivo ? '#f0f0f0' : '#666' }}>
-              {profile.objetivo || 'Tocá "Editar" para escribir tu objetivo actual'}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: 900, fontSize: 30, color: '#a3e635', lineHeight: 1 }}>{mmSemana}</div>
+              <div style={{ fontSize: 9, color: '#666', marginTop: 2 }}>MM esta semana</div>
+            </div>
+          </div>
+
+          <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
+            <div style={{ height: '100%', width: progresoPct + '%', background: 'linear-gradient(90deg, #a3e635, #84cc16)', borderRadius: 4, transition: 'width 1s ease' }}></div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: '#666' }}>{mmSemana} / {META_SEMANAL} MM</div>
+            <div style={{ fontSize: 10, color: '#a3e635', fontWeight: 700 }}>{Math.round(progresoPct)}%</div>
+          </div>
+
+          <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)', paddingTop: 12, marginBottom: 12 }}>
+            <div style={{ fontSize: 10, color: '#555', marginBottom: 8 }}>Tu camino hacia la corona - Tu máxima insignia:</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {NIVELES.map((n, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flex: 1 }}>
+                  <span style={{ fontSize: 16, opacity: mmHistorico >= n.mm ? 1 : 0.2 }}>{n.icon}</span>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: mmHistorico >= n.mm ? '#a3e635' : 'rgba(255,255,255,0.1)' }}></div>
+                  <span style={{ fontSize: 8, color: mmHistorico >= n.mm ? '#a3e635' : '#444' }}>{n.mm}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {nivelSiguiente && (
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: '#888' }}>Proximo: {nivelSiguiente.icon} {nivelSiguiente.nombre}</div>
+              <div style={{ fontSize: 11, color: '#a3e635', fontWeight: 700 }}>faltan {nivelSiguiente.mm - mmHistorico} MM</div>
             </div>
           )}
+
+          <button onClick={() => compartirSemana(mmSemana, nivelSemanal, profile.nombre.split(' ')[0])} style={{
+            width: '100%', background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)',
+            borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 600,
+            color: '#a3e635', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+          }}>
+            Compartir Logro en Redes 🌐
+          </button>
         </div>
 
-        {/* FRASE */}
-        {ultimaFrase && (
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>✦ Tu frase de buen rendimiento</div>
-            <div style={{ fontSize: 15, lineHeight: 1.6, color: '#f0f0f0', fontStyle: 'italic' }}>"{ultimaFrase}"</div>
+        {/* CTA REGISTRAR */}
+        <div onClick={() => router.push('/registrar')} style={{ background: '#a3e635', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#0a0a0a' }}>+ Hacer Nuevo Registro</div>
+            <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)', marginTop: 1 }}>Suma más MM a tu semana</div>
+          </div>
+          <div style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#0a0a0a' }}>→</div>
+        </div>
+
+        {/* PREGUNTA DEL DÍA */}
+        {pregunta && (
+          <div style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(96,165,250,0.25)', borderRadius: 16, marginBottom: 14, overflow: 'hidden' }}>
+            <div onClick={() => setPreguntaAbierta(!preguntaAbierta)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', cursor: 'pointer' }}>
+              <div>
+                <div style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>⚡ Pregunta del dia</div>
+                {!preguntaAbierta && <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>{pregunta.pregunta}</div>}
+              </div>
+              <div style={{ fontSize: 12, color: '#555', transform: preguntaAbierta ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginLeft: 8, flexShrink: 0 }}>▼</div>
+            </div>
+
+            {preguntaAbierta && (
+              <div style={{ padding: '0 16px 16px' }}>
+                <div style={{ fontSize: 12, color: '#60a5fa', marginBottom: 10 }}>
+                  {miRespuesta ? 'Esto es lo que piensan los jugadores:' : 'Responde y averigua que votaron otros jugadores'}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, lineHeight: 1.4 }}>{pregunta.pregunta}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {pregunta.opciones.map((opcion, i) => {
+                    const total = Object.values(respuestas).reduce((a, b) => a + b, 0)
+                    const votos = respuestas[opcion] || 0
+                    const pct = total > 0 ? Math.round((votos / total) * 100) : 0
+                    const esMia = miRespuesta === opcion
+                    const yaVote = !!miRespuesta
+                    return (
+                      <div key={i} onClick={() => !yaVote && votar(opcion)} style={{
+                        background: esMia ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+                        border: esMia ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)',
+                        borderRadius: 10, padding: '10px 12px', cursor: yaVote ? 'default' : 'pointer'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: yaVote ? 6 : 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: esMia ? 700 : 400, color: esMia ? '#a3e635' : '#ccc' }}>
+                            {opcion} {esMia ? '✓' : ''}
+                          </div>
+                          {yaVote && <div style={{ fontSize: 12, fontWeight: 700, color: esMia ? '#a3e635' : '#888' }}>{pct}%</div>}
+                        </div>
+                        {yaVote && (
+                          <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: pct + '%', background: esMia ? '#a3e635' : '#60a5fa', borderRadius: 2 }}></div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* CONTADORES */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-          {[
-            { val: partidos, label: 'Partidos', icon: '🏆' },
-            { val: entrenamientos, label: 'Entrenamientos', icon: '🎾' },
-          ].map((s, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 12px', textAlign: 'center' }}>
-              <div style={{ fontSize: 24, marginBottom: 4 }}>{s.icon}</div>
-              <div style={{ fontWeight: 800, fontSize: 26, color: '#a3e635' }}>{s.val}</div>
-              <div style={{ fontSize: 11, color: '#666', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+        {/* OBJETIVO + INSIGHT */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          <div style={{ flex: 1, background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.15)', borderRadius: 12, padding: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+              <div style={{ fontSize: 9, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>🎯 Objetivo</div>
+              <div onClick={() => { setObjTemp(profile.objetivo); setEditandoObjetivo(true) }} style={{ fontSize: 9, color: '#a3e635', cursor: 'pointer' }}>Editar</div>
             </div>
-          ))}
+            {editandoObjetivo ? (
+              <div>
+                <textarea value={objTemp} onChange={e => setObjTemp(e.target.value)}
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(163,230,53,0.3)', borderRadius: 6, padding: '6px 8px', color: '#f0f0f0', fontSize: 11, outline: 'none', resize: 'none', minHeight: 50, boxSizing: 'border-box', fontFamily: 'system-ui' }}
+                />
+                <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                  <button onClick={guardarObjetivo} style={{ flex: 1, background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 6, padding: '5px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Guardar</button>
+                  <button onClick={() => setEditandoObjetivo(false)} style={{ flex: 1, background: 'transparent', color: '#888', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '5px', fontSize: 10, cursor: 'pointer' }}>Cancelar</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.4 }}>{profile.objetivo || 'Toca Editar para agregar tu objetivo'}</div>
+            )}
+          </div>
+
+          <div style={{ flex: 1, background: 'rgba(245,158,11,0.06)', borderLeft: '3px solid #f59e0b', borderRadius: 12, padding: 12 }}>
+            <div style={{ fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 5 }}>🙋 Tu psico dice</div>
+            <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.4 }}>{profile.insight_manager || 'Tu psicologa todavia no escribio un mensaje.'}</div>
+          </div>
         </div>
 
-        {/* INSIGHT */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #f59e0b', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontWeight: 700 }}>Mensaje de tu Psicóloga Mica 🙋‍♀️</div>
-          <div style={{ fontSize: 13, lineHeight: 1.5 }}>{profile.insight_manager || 'Tu psicóloga todavía no escribió un mensaje para vos.'}</div>
+        {/* STATS + FORTALEZAS */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 10, textAlign: 'center', flex: 1 }}>
+            <div style={{ fontSize: 18 }}>🏆</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#a3e635' }}>{partidos}</div>
+            <div style={{ fontSize: 9, color: '#555' }}>partidos</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 10, textAlign: 'center', flex: 1 }}>
+            <div style={{ fontSize: 18 }}>🎾</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#a3e635' }}>{entrenamientos}</div>
+            <div style={{ fontSize: 9, color: '#555' }}>entrenos</div>
+          </div>
+          <div style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.15)', borderRadius: 10, padding: 10, textAlign: 'center', flex: 1 }}>
+            <div style={{ fontSize: 18 }}>💛</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#facc15' }}>{depositosBancoHome}</div>
+            <div style={{ fontSize: 9, color: '#666' }}>depositos</div>
+          </div>
         </div>
 
         {/* FORTALEZAS */}
         {topFortalezas.length > 0 && (
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, fontWeight: 700 }}>💪 Tus mayores fortalezas</div>
-            <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 12px', marginBottom: 14 }}>
+            <div style={{ fontSize: 9, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 8 }}>💪 Tus mayores fortalezas</div>
+            <div style={{ display: 'flex', gap: 5 }}>
               {topFortalezas.map(([fortaleza, cantidad], i) => {
                 const iconMap: Record<string, string> = {
-                  'Persistencia': '🔥', 'Valentía': '🦁', 'Foco': '🎯',
+                  'Persistencia': '🔥', 'Valentia': '🦁', 'Foco': '🎯',
                   'Calma': '🌊', 'Creatividad': '💡', 'Liderazgo': '👑',
-                  'Resiliencia': '💪', 'Actitud': '⚡', 'Compañerismo': '🤝',
-                  'Inteligencia': '🧠', 'Constancia': '🌟', 'Técnica': '🎾',
+                  'Resiliencia': '💪', 'Actitud': '⚡', 'Companerismo': '🤝',
+                  'Inteligencia': '🧠', 'Constancia': '🌟', 'Tecnica': '🎾',
+                  'Valentía': '🦁', 'Compañerismo': '🤝', 'Técnica': '🎾',
                 }
                 return (
-                  <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 20, padding: '5px 8px' }}>
-                    <span style={{ fontSize: 13 }}>{iconMap[fortaleza] || '⭐'}</span>
-                    <span style={{ fontSize: 11, color: '#f0f0f0' }}>{fortaleza}</span>
-                    <span style={{ fontSize: 10, color: '#facc15', fontWeight: 700 }}>{cantidad}x</span>
+                  <div key={i} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 20, padding: '5px 4px' }}>
+                    <span style={{ fontSize: 11 }}>{iconMap[fortaleza] || '⭐'}</span>
+                    <span style={{ fontSize: 10, color: '#f0f0f0' }}>{fortaleza.length > 8 ? fortaleza.substring(0, 7) + '.' : fortaleza}</span>
+                    <span style={{ fontSize: 9, color: '#facc15', fontWeight: 700 }}>{cantidad}x</span>
                   </div>
                 )
               })}
@@ -633,13 +753,63 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
           </div>
         )}
 
+        {/* PERFIL JUGADOR */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>🎾 Mi perfil</div>
+            <div onClick={() => { setNivelTemp(profile.nivel || ''); setCategoriaTemp(profile.categoria || ''); setEditandoPerfil(true) }} style={{ fontSize: 11, color: '#a3e635', cursor: 'pointer' }}>Editar</div>
+          </div>
+          {editandoPerfil ? (
+            <div>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>Nivel</div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                {['Amateur', 'Profesional'].map(n => (
+                  <button key={n} onClick={() => setNivelTemp(n)} style={{
+                    flex: 1, padding: '8px',
+                    background: nivelTemp === n ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+                    border: nivelTemp === n ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 8, color: nivelTemp === n ? '#a3e635' : '#888', fontSize: 12, cursor: 'pointer', fontWeight: 600
+                  }}>{n}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>Categoria</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 12 }}>
+                {['1ra', '2da', '3ra', '4ta', '5ta', '6ta', '7ma', '8va'].map(c => (
+                  <button key={c} onClick={() => setCategoriaTemp(c)} style={{
+                    padding: '8px 4px',
+                    background: categoriaTemp === c ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+                    border: categoriaTemp === c ? '1px solid rgba(163,230,53,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 8, color: categoriaTemp === c ? '#a3e635' : '#888', fontSize: 12, cursor: 'pointer', fontWeight: 600
+                  }}>{c}</button>
+                ))}
+              </div>
+<div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>Fecha de nacimiento</div>
+<input type="date" value={profile.fecha_nacimiento || ''} 
+  onChange={e => setProfile({ ...profile, fecha_nacimiento: e.target.value })}
+  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 12px', color: '#f0f0f0', fontSize: 13, outline: 'none', boxSizing: 'border-box', colorScheme: 'dark', marginBottom: 12 }}
+/>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={guardarPerfil} style={{ flex: 1, background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Guardar</button>
+                <button onClick={() => setEditandoPerfil(false)} style={{ flex: 1, background: 'transparent', color: '#888', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {profile.nivel && <div style={{ background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#a3e635' }}>{profile.nivel}</div>}
+              {profile.categoria && <div style={{ background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#a3e635' }}>Cat. {profile.categoria}</div>}
+              {!profile.nivel && !profile.categoria && <div style={{ fontSize: 12, color: '#666' }}>Toca Editar para completar tu perfil</div>}
+            </div>
+          )}
+        </div>
+
         {/* CALENDARIO */}
         <Calendario registros={registros} eventos={eventos} onAgregarEvento={(fecha) => setModalEvento(fecha)} />
 
         {/* PRÓXIMOS EVENTOS */}
         {proximosEventos.length > 0 && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 10 }}>📌 Próximos eventos</div>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888', marginBottom: 10 }}>Proximos eventos</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {proximosEventos.map((e, i) => (
                 <div key={i} style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.15)', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -659,34 +829,33 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
         )}
 
         {/* ÚLTIMOS REGISTROS */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888' }}>Últimos registros</div>
-          <div onClick={() => router.push('/registrar')} style={{ fontSize: 12, color: '#a3e635', cursor: 'pointer' }}>+ Nuevo →</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#888' }}>Ultimos registros</div>
+          <div onClick={() => router.push('/registrar')} style={{ fontSize: 12, color: '#a3e635', cursor: 'pointer' }}>+ Nuevo</div>
         </div>
 
         {registros.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555', fontSize: 14 }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🎾</div>
-            <div>Todavía no tenés registros.</div>
-            <div style={{ marginTop: 4 }}>¡Hacé tu primer registro!</div>
+            <div>Todavia no tenes registros.</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {registros.slice(0, 5).map((r, i) => (
-              <div key={i} onClick={() => router.push('/registro?id=' + r.id)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{iconTipo(r.tipo)}</div>
+              <div key={i} onClick={() => router.push('/registro?id=' + r.id)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 9, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{iconTipo(r.tipo)}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{r.tipo}</div>
-                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{formatFecha(r.created_at)}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{r.tipo}</div>
+                    <div style={{ fontSize: 11, color: '#555', marginTop: 1 }}>{formatFecha(r.created_at)}</div>
                   </div>
-                  <div style={{ textAlign: 'right', marginRight: 8 }}>
-                    <div style={{ fontWeight: 800, fontSize: 20, color: colorRendimiento(Number(r.resultado) || 0) }}>{r.resultado}/10</div>
-                    <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>{labelRendimiento(Number(r.resultado) || 0)}</div>
+                  <div style={{ textAlign: 'right', marginRight: 6 }}>
+                    <div style={{ fontWeight: 800, fontSize: 18, color: colorRendimiento(Number(r.resultado) || 0) }}>{r.resultado}/10</div>
+                    <div style={{ fontSize: 9, color: '#888', marginTop: 1 }}>{labelRendimiento(Number(r.resultado) || 0)}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <div onClick={e => { e.stopPropagation(); router.push('/editar?id=' + r.id) }} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(163,230,53,0.1)', border: '1px solid rgba(163,230,53,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14 }}>✏️</div>
-                    <div onClick={e => { e.stopPropagation(); eliminarRegistro(r.id) }} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14 }}>🗑️</div>
+                  <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+                    <div onClick={e => { e.stopPropagation(); router.push('/editar?id=' + r.id) }} style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(163,230,53,0.1)', border: '1px solid rgba(163,230,53,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 13 }}>✏️</div>
+                    <div onClick={e => { e.stopPropagation(); eliminarRegistro(r.id) }} style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 13 }}>🗑️</div>
                   </div>
                 </div>
               </div>
@@ -702,7 +871,7 @@ if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
           { icon: '🏠', label: 'Inicio', path: '/home', active: true },
           { icon: '➕', label: 'Registrar', path: '/registrar', active: false },
           { icon: '💛', label: 'Confianza', path: '/diario', active: false },
-          { icon: '📊', label: 'Gráficos', path: '/graficos', active: false },
+          { icon: '📊', label: 'Graficos', path: '/graficos', active: false },
           { icon: '📚', label: 'Biblioteca', path: '/biblioteca', active: false },
         ].map((t, i) => (
           <div key={i} onClick={() => router.push(t.path)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
