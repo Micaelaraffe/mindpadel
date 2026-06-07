@@ -648,7 +648,7 @@ export default function HomePage() {
           <div style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(96,165,250,0.25)', borderRadius: 16, marginBottom: 14, overflow: 'hidden' }}>
             <div onClick={() => setPreguntaAbierta(!preguntaAbierta)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', cursor: 'pointer' }}>
               <div>
-                <div style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>⚡ Pregunta del dia</div>
+                <div style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>🤔 Pregunta del dia</div>
                 {!preguntaAbierta && <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>{pregunta.pregunta}</div>}
               </div>
               <div style={{ fontSize: 12, color: '#555', transform: preguntaAbierta ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginLeft: 8, flexShrink: 0 }}>▼</div>
@@ -657,7 +657,7 @@ export default function HomePage() {
             {preguntaAbierta && (
               <div style={{ padding: '0 16px 16px' }}>
                 <div style={{ fontSize: 12, color: '#60a5fa', marginBottom: 10 }}>
-                  {miRespuesta ? 'Esto es lo que piensan los jugadores:' : 'Responde y averigua que votaron otros jugadores'}
+                  {miRespuesta ? 'Esto es lo que respondieron otros jugadores:' : 'Respondé y mirá que votaron otros jugadores'}
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, lineHeight: 1.4 }}>{pregunta.pregunta}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
