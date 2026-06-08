@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import InstalarPWA from './components/InstalarPWA'
 
 export const metadata: Metadata = {
   title: 'Pádel Mental App',
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           position: 'relative',
           background: 'linear-gradient(180deg, #0a0a0a 0%, #0a1a0a 60%, #0d2e0d 100%)',
         }}>
+          <InstalarPWA />
           {children}
+          
         </div>
       </body>
     </html>
