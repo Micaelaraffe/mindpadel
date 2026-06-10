@@ -561,10 +561,15 @@ export default function HomePage() {
           <div style={{ fontSize: 9, color: '#a3e635', letterSpacing: '0.1em' }}>By Ps. Mica Raffe</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
   <div onClick={() => router.push('/social')} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(96,165,250,0.12)', border: '1.5px solid rgba(96,165,250,0.3)', borderRadius: 20, padding: '6px 12px', cursor: 'pointer' }}>
-  <span style={{ fontSize: 14 }}>🎾</span>
-  <span style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa' }}>Social</span>
-  <div style={{ position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '1.5px solid #0a0a0a' }}></div>
+    <span style={{ fontSize: 14 }}>🎾</span>
+    <span style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa' }}>Social</span>
+    <div style={{ position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '1.5px solid #0a0a0a' }}></div>
+  </div>
+  {(profile as any).es_premium && (
+    <div style={{ background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: 20, padding: '4px 10px', fontSize: 10, fontWeight: 800, color: '#0a0a0a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>⭐ Premium</div>
+  )}
 </div>
   <div onClick={cerrarSesion} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#a3e635' }}>
     {profile.nombre.charAt(0).toUpperCase()}

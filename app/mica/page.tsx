@@ -114,7 +114,7 @@ export default function MicaPage() {
           <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, marginBottom: 12 }}>
             Escribile a Mica para coordinar una sesión. Te va a contactar por WhatsApp o email.
           </div>
-          <a href="https://wa.me/549XXXXXXXXXX?text=Hola%20Mica%2C%20quiero%20agendar%20una%20sesi%C3%B3n"
+          <a href="https://wa.me/56971396650?text=Hola%20Mica%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20de%20psicolog%C3%ADa%20deportiva"
             target="_blank" rel="noopener noreferrer"
             style={{ display: 'block', background: '#25D366', color: '#fff', border: 'none', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'center', textDecoration: 'none' }}>
             📲 Agendar por WhatsApp
