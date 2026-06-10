@@ -561,10 +561,11 @@ export default function HomePage() {
           <div style={{ fontSize: 9, color: '#a3e635', letterSpacing: '0.1em' }}>By Ps. Mica Raffe</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-  <div onClick={() => router.push('/social')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(163,230,53,0.12)', border: '1.5px solid rgba(163,230,53,0.3)', borderRadius: 20, padding: '6px 12px', cursor: 'pointer' }}>
-    <span style={{ fontSize: 14 }}>🎾</span>
-    <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635' }}>Social</span>
-  </div>
+  <div onClick={() => router.push('/social')} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(96,165,250,0.12)', border: '1.5px solid rgba(96,165,250,0.3)', borderRadius: 20, padding: '6px 12px', cursor: 'pointer' }}>
+  <span style={{ fontSize: 14 }}>🎾</span>
+  <span style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa' }}>Social</span>
+  <div style={{ position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '1.5px solid #0a0a0a' }}></div>
+</div>
   <div onClick={cerrarSesion} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#a3e635' }}>
     {profile.nombre.charAt(0).toUpperCase()}
   </div>
@@ -672,55 +673,7 @@ export default function HomePage() {
           <div style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#0a0a0a' }}>→</div>
         </div>
 
-        {/* PREGUNTA DEL DÍA */}
-        {pregunta && (
-          <div style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(96,165,250,0.25)', borderRadius: 16, marginBottom: 14, overflow: 'hidden' }}>
-            <div onClick={() => setPreguntaAbierta(!preguntaAbierta)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', cursor: 'pointer' }}>
-              <div>
-                <div style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>🤔 Pregunta del dia</div>
-                {!preguntaAbierta && <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>{pregunta.pregunta}</div>}
-              </div>
-              <div style={{ fontSize: 12, color: '#555', transform: preguntaAbierta ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginLeft: 8, flexShrink: 0 }}>▼</div>
-            </div>
-
-            {preguntaAbierta && (
-              <div style={{ padding: '0 16px 16px' }}>
-                <div style={{ fontSize: 12, color: '#60a5fa', marginBottom: 10 }}>
-                  {miRespuesta ? 'Esto es lo que respondieron otros jugadores:' : 'Respondé y mirá que votaron otros jugadores'}
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, lineHeight: 1.4 }}>{pregunta.pregunta}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {pregunta.opciones.map((opcion, i) => {
-                    const total = Object.values(respuestas).reduce((a, b) => a + b, 0)
-                    const votos = respuestas[opcion] || 0
-                    const pct = total > 0 ? Math.round((votos / total) * 100) : 0
-                    const esMia = miRespuesta === opcion
-                    const yaVote = !!miRespuesta
-                    return (
-                      <div key={i} onClick={() => !yaVote && votar(opcion)} style={{
-                        background: esMia ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
-                        border: esMia ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)',
-                        borderRadius: 10, padding: '10px 12px', cursor: yaVote ? 'default' : 'pointer'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: yaVote ? 6 : 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: esMia ? 700 : 400, color: esMia ? '#a3e635' : '#ccc' }}>
-                            {opcion} {esMia ? '✓' : ''}
-                          </div>
-                          {yaVote && <div style={{ fontSize: 12, fontWeight: 700, color: esMia ? '#a3e635' : '#888' }}>{pct}%</div>}
-                        </div>
-                        {yaVote && (
-                          <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: pct + '%', background: esMia ? '#a3e635' : '#60a5fa', borderRadius: 2 }}></div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+       
 
         {/*INSIGHT */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
