@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import PremiumBloqueado from '../components/PremiumBloqueado'
 
 type Registro = {
   id: string
@@ -33,6 +34,7 @@ export default function GraficosPage() {
   const router = useRouter()
   const [registros, setRegistros] = useState<Registro[]>([])
   const [loading, setLoading] = useState(true)
+  const [esPremium, setEsPremium] = useState(false)
 
   useEffect(() => { loadData() }, [])
 
@@ -46,6 +48,9 @@ export default function GraficosPage() {
       .order('created_at', { ascending: true })
     if (data) setRegistros(data)
     setLoading(false)
+  const { data: perfil } = await supabase
+  .from('profiles').select('es_premium').eq('id', user.id).single()
+setEsPremium(perfil?.es_premium || false)
   }
 
   // Emociones en sesiones buenas (rendimiento >= 7)
@@ -276,36 +281,26 @@ export default function GraficosPage() {
 })()}
 
 {/* PARTIDOS VS ENTRENAMIENTOS */}
-{registros.length >= 2 && (() => {
+{esPremium ? (() => {
+  if (registros.length < 2) return null
   const partidos = registros.filter(r => r.tipo === 'Partido amistoso' || r.tipo === 'Torneo' || r.tipo === 'Partido')
   const entrenos = registros.filter(r => r.tipo === 'Entrenamiento')
-
   if (partidos.length === 0 || entrenos.length === 0) return null
 
-  function promZor(regs: typeof registros) {
-    return {
-      activacion: Number((regs.reduce((s, r) => s + r.activacion, 0) / regs.length).toFixed(1)),
-      concentracion: Number((regs.reduce((s, r) => s + r.concentracion, 0) / regs.length).toFixed(1)),
-      confianza: Number((regs.reduce((s, r) => s + r.confianza, 0) / regs.length).toFixed(1)),
-      desafio: Number((regs.reduce((s, r) => s + r.desafio, 0) / regs.length).toFixed(1)),
-    }
-  }
-
-  const zorPartidos = promZor(partidos)
-  const zorEntrenos = promZor(entrenos)
+  const prom = (regs: typeof registros, key: keyof typeof registros[0]) =>
+    Number((regs.reduce((s, r) => s + (r[key] as number), 0) / regs.length).toFixed(1))
 
   const comparacionData = [
-    { metrica: 'Activación', Partidos: zorPartidos.activacion, Entrenos: zorEntrenos.activacion },
-    { metrica: 'Concentración', Partidos: zorPartidos.concentracion, Entrenos: zorEntrenos.concentracion },
-    { metrica: 'Confianza', Partidos: zorPartidos.confianza, Entrenos: zorEntrenos.confianza },
-    { metrica: 'Dificultad', Partidos: zorPartidos.desafio, Entrenos: zorEntrenos.desafio },
+    { metrica: 'Activación', Partidos: prom(partidos, 'activacion'), Entrenos: prom(entrenos, 'activacion') },
+    { metrica: 'Concentración', Partidos: prom(partidos, 'concentracion'), Entrenos: prom(entrenos, 'concentracion') },
+    { metrica: 'Confianza', Partidos: prom(partidos, 'confianza'), Entrenos: prom(entrenos, 'confianza') },
+    { metrica: 'Dificultad', Partidos: prom(partidos, 'desafio'), Entrenos: prom(entrenos, 'desafio') },
   ]
 
   return (
     <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
       <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#888', marginBottom: 4 }}>🎾 Partidos vs Entrenamientos</div>
       <div style={{ fontSize: 12, color: '#666', marginBottom: 14 }}>Promedio ZOR en cada contexto</div>
-
       <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ width: 10, height: 10, borderRadius: 2, background: '#a3e635' }}></div>
@@ -316,7 +311,6 @@ export default function GraficosPage() {
           <span style={{ fontSize: 11, color: '#888' }}>Entrenamientos ({entrenos.length})</span>
         </div>
       </div>
-
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={comparacionData}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -327,7 +321,6 @@ export default function GraficosPage() {
           <Bar dataKey="Entrenos" fill="#60a5fa" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-
       <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {comparacionData.map((m, i) => {
           const diff = m.Partidos - m.Entrenos
@@ -343,7 +336,7 @@ export default function GraficosPage() {
       </div>
     </div>
   )
-})()}
+})() : <PremiumBloqueado />}
 
 
         {/* FRASES Y APRENDIZAJES */}

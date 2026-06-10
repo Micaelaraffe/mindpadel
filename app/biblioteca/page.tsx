@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import PremiumBloqueado from '../components/PremiumBloqueado'
 
 type Item = {
   id: string
@@ -30,6 +31,8 @@ export default function BibliotecaPage() {
   const [filtro, setFiltro] = useState('Todos')
   const [loading, setLoading] = useState(true)
   const [seleccionado, setSeleccionado] = useState<Item | null>(null)
+  const [esPremium, setEsPremium] = useState(false)
+  
 
   useEffect(() => { loadData() }, [])
 
@@ -44,7 +47,12 @@ export default function BibliotecaPage() {
 
     if (data) setItems(data)
     setLoading(false)
+  const { data: perfil } = await supabase
+  .from('profiles').select('es_premium').eq('id', user.id).single()
+setEsPremium(perfil?.es_premium || false)
   }
+
+  
 
   const itemsFiltrados = filtro === 'Todos'
     ? items
@@ -128,35 +136,38 @@ export default function BibliotecaPage() {
         )}
 
         {/* LISTA */}
-        {itemsFiltrados.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
-            <div style={{ fontSize: 14 }}>No hay contenido en esta categoría todavía.</div>
+{itemsFiltrados.length === 0 ? (
+  <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555' }}>
+    <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
+    <div style={{ fontSize: 14 }}>No hay contenido en esta categoría todavía.</div>
+  </div>
+) : (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    {(esPremium ? itemsFiltrados : itemsFiltrados.slice(0, 3)).map((item, i) => (
+      <div key={i} onClick={() => setSeleccionado(item)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, display: 'flex', gap: 14, alignItems: 'flex-start', cursor: 'pointer' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: tipoConfig[item.tipo]?.color || 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+          {tipoConfig[item.tipo]?.icon || '📄'}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4 }}>{item.titulo}</div>
+          {item.descripcion && (
+            <div style={{ fontSize: 12, color: '#888', marginTop: 4, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {item.descripcion}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 6, marginTop: 8, alignItems: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 20, fontSize: 10, color: '#888', padding: '2px 8px' }}>{item.tipo}</div>
+            {item.tag && <div style={{ background: 'rgba(163,230,53,0.08)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 20, fontSize: 10, color: '#a3e635', padding: '2px 8px' }}>{item.tag}</div>}
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {itemsFiltrados.map((item, i) => (
-              <div key={i} onClick={() => setSeleccionado(item)} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, display: 'flex', gap: 14, alignItems: 'flex-start', cursor: 'pointer' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: tipoConfig[item.tipo]?.color || 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-                  {tipoConfig[item.tipo]?.icon || '📄'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4 }}>{item.titulo}</div>
-                  {item.descripcion && (
-                    <div style={{ fontSize: 12, color: '#888', marginTop: 4, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {item.descripcion}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', gap: 6, marginTop: 8, alignItems: 'center' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 20, fontSize: 10, color: '#888', padding: '2px 8px' }}>{item.tipo}</div>
-                    {item.tag && <div style={{ background: 'rgba(163,230,53,0.08)', border: '0.5px solid rgba(163,230,53,0.2)', borderRadius: 20, fontSize: 10, color: '#a3e635', padding: '2px 8px' }}>{item.tag}</div>}
-                  </div>
-                </div>
-                <div style={{ color: '#666', fontSize: 16, flexShrink: 0 }}>→</div>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
+        <div style={{ color: '#666', fontSize: 16, flexShrink: 0 }}>→</div>
+      </div>
+    ))}
+    {!esPremium && itemsFiltrados.length > 3 && (
+      <PremiumBloqueado />
+    )}
+  </div>
+)}
 
       </div>
 

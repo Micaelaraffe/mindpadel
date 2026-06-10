@@ -13,6 +13,7 @@ type Jugador = {
   created_at: string
   totalRegistros?: number
   ultimoRegistro?: string
+  es_premium: boolean
 }
 
 type Registro = {
@@ -218,6 +219,15 @@ console.log('Respuesta notificacion:', JSON.stringify(dataNoti))
     setBiblioteca(prev => prev.filter(i => i.id !== id))
   }
 
+async function togglePremium(jugador: Jugador) {
+  const nuevo = !jugador.es_premium
+  await supabase.from('profiles').update({ es_premium: nuevo }).eq('id', jugador.id)
+  setJugadores(prev => prev.map(j => j.id === jugador.id ? { ...j, es_premium: nuevo } : j))
+  if (jugadorSeleccionado?.id === jugador.id) {
+    setJugadorSeleccionado({ ...jugadorSeleccionado, es_premium: nuevo })
+  }
+}
+
   async function eliminarJugador(id: string) {
     const confirmar = window.confirm('¿Seguro que querés eliminar este jugador?')
     if (!confirmar) return
@@ -310,6 +320,24 @@ console.log('Respuesta notificacion:', JSON.stringify(dataNoti))
               }}>{t.label}</button>
             ))}
           </div>
+
+          {/* TOGGLE PREMIUM */}
+<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: jugadorSeleccionado.es_premium ? 'rgba(250,204,21,0.08)' : 'rgba(255,255,255,0.03)', border: jugadorSeleccionado.es_premium ? '1px solid rgba(250,204,21,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <span style={{ fontSize: 20 }}>{jugadorSeleccionado.es_premium ? '⭐' : '🔒'}</span>
+    <div>
+      <div style={{ fontSize: 13, fontWeight: 700 }}>{jugadorSeleccionado.es_premium ? 'Acceso Premium activo' : 'Sin acceso Premium'}</div>
+      <div style={{ fontSize: 11, color: '#666', marginTop: 1 }}>Gráficos avanzados, biblioteca, sesiones con Mica</div>
+    </div>
+  </div>
+  <div onClick={() => togglePremium(jugadorSeleccionado)} style={{
+    background: jugadorSeleccionado.es_premium ? '#facc15' : 'rgba(255,255,255,0.08)',
+    borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700,
+    color: jugadorSeleccionado.es_premium ? '#0a0a0a' : '#888', cursor: 'pointer'
+  }}>
+    {jugadorSeleccionado.es_premium ? 'Desactivar' : 'Activar'}
+  </div>
+</div>
 
           {/* TAB REGISTROS */}
           {tabJugador === 'registros' && (
@@ -606,7 +634,12 @@ console.log('Respuesta notificacion:', JSON.stringify(dataNoti))
                     {j.nombre.charAt(0).toUpperCase()}
                   </div>
                   <div onClick={() => verJugador(j)} style={{ flex: 1, cursor: 'pointer' }}>
-                    <div style={{ fontWeight: 600, fontSize: 15 }}>{j.nombre}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+  <div style={{ fontWeight: 600, fontSize: 15 }}>{j.nombre}</div>
+  {j.es_premium && (
+    <div style={{ background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 800, color: '#0a0a0a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Premium</div>
+  )}
+</div>
                     <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
                       {j.totalRegistros} registros · {j.ultimoRegistro ? formatFecha(j.ultimoRegistro) : 'Sin registros'}
                     </div>

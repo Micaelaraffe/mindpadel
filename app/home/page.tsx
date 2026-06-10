@@ -560,9 +560,15 @@ export default function HomePage() {
           <div style={{ fontWeight: 800, fontSize: 15 }}>Pádel Mental App</div>
           <div style={{ fontSize: 9, color: '#a3e635', letterSpacing: '0.1em' }}>By Ps. Mica Raffe</div>
         </div>
-        <div onClick={cerrarSesion} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#a3e635' }}>
-          {profile.nombre.charAt(0).toUpperCase()}
-        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+  <div onClick={() => router.push('/social')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(163,230,53,0.12)', border: '1.5px solid rgba(163,230,53,0.3)', borderRadius: 20, padding: '6px 12px', cursor: 'pointer' }}>
+    <span style={{ fontSize: 14 }}>🎾</span>
+    <span style={{ fontSize: 11, fontWeight: 700, color: '#a3e635' }}>Social</span>
+  </div>
+  <div onClick={cerrarSesion} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#a3e635' }}>
+    {profile.nombre.charAt(0).toUpperCase()}
+  </div>
+</div>
       </div>
 
       <div style={{ padding: '0 20px 100px' }}>
@@ -634,6 +640,29 @@ export default function HomePage() {
           </button>
         </div>
 
+{/* OBJETIVO */}
+<div style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.15)', borderRadius: 14, padding: '12px 16px', marginBottom: 14 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+    <div style={{ fontSize: 10, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>🎯 Tu próximo objetivo es</div>
+    <div onClick={() => { setObjTemp(profile.objetivo); setEditandoObjetivo(true) }} style={{ fontSize: 10, color: '#a3e635', cursor: 'pointer' }}>Editar</div>
+  </div>
+  {editandoObjetivo ? (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <textarea value={objTemp} onChange={e => setObjTemp(e.target.value)}
+        style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(163,230,53,0.3)', borderRadius: 8, padding: '8px 10px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 55, boxSizing: 'border-box', fontFamily: 'system-ui' }}
+      />
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button onClick={guardarObjetivo} style={{ flex: 1, background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Guardar</button>
+        <button onClick={() => setEditandoObjetivo(false)} style={{ flex: 1, background: 'transparent', color: '#888', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px', fontSize: 12, cursor: 'pointer' }}>Cancelar</button>
+      </div>
+    </div>
+  ) : (
+    <div style={{ fontSize: 13, color: profile.objetivo ? '#f0f0f0' : '#555', lineHeight: 1.5 }}>
+      {profile.objetivo || 'Tocá "Editar" para escribir tu próximo objetivo'}
+    </div>
+  )}
+</div>
+
         {/* CTA REGISTRAR */}
         <div onClick={() => router.push('/registrar')} style={{ background: '#a3e635', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: 14 }}>
           <div>
@@ -693,32 +722,19 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* OBJETIVO + INSIGHT */}
+        {/*INSIGHT */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <div style={{ flex: 1, background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.15)', borderRadius: 12, padding: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-              <div style={{ fontSize: 9, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>🎯 Objetivo</div>
-              <div onClick={() => { setObjTemp(profile.objetivo); setEditandoObjetivo(true) }} style={{ fontSize: 9, color: '#a3e635', cursor: 'pointer' }}>Editar</div>
-            </div>
-            {editandoObjetivo ? (
-              <div>
-                <textarea value={objTemp} onChange={e => setObjTemp(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(163,230,53,0.3)', borderRadius: 6, padding: '6px 8px', color: '#f0f0f0', fontSize: 11, outline: 'none', resize: 'none', minHeight: 50, boxSizing: 'border-box', fontFamily: 'system-ui' }}
-                />
-                <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                  <button onClick={guardarObjetivo} style={{ flex: 1, background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 6, padding: '5px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Guardar</button>
-                  <button onClick={() => setEditandoObjetivo(false)} style={{ flex: 1, background: 'transparent', color: '#888', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '5px', fontSize: 10, cursor: 'pointer' }}>Cancelar</button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.4 }}>{profile.objetivo || 'Toca Editar para agregar tu objetivo'}</div>
-            )}
-          </div>
+          
 
-          <div style={{ flex: 1, background: 'rgba(245,158,11,0.06)', borderLeft: '3px solid #f59e0b', borderRadius: 12, padding: 12 }}>
-            <div style={{ fontSize: 9, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 5 }}>🙋 Tu psico dice</div>
-            <div style={{ fontSize: 11, color: '#ccc', lineHeight: 1.4 }}>{profile.insight_manager || 'Tu psicologa todavia no escribio un mensaje.'}</div>
-          </div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #f59e0b', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+    <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>Mensaje de tu Psicóloga Mica 🙋‍♀️</div>
+    <div onClick={() => router.push('/mica')} style={{ fontSize: 11, color: '#f59e0b', cursor: 'pointer', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: '3px 10px' }}>
+      ⭐ Escribirle
+    </div>
+  </div>
+  <div style={{ fontSize: 13, lineHeight: 1.5 }}>{profile.insight_manager || 'Tu psicóloga todavía no escribió un mensaje para vos.'}</div>
+</div>
         </div>
 
         {/* STATS + FORTALEZAS */}
