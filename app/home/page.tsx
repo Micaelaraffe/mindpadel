@@ -319,7 +319,7 @@ export default function HomePage() {
     if (!user) { router.push('/'); return }
 
     const { data: prof } = await supabase
-      .from('profiles').select('nombre, objetivo, insight_manager, nivel, categoria, fecha_nacimiento').eq('id', user.id).single()
+      .from('profiles').select('nombre, objetivo, insight_manager, nivel, categoria, fecha_nacimiento, es_premium').eq('id', user.id).single()
     if (prof) {
       setProfile(prof)
       setObjTemp(prof.objetivo || '')
@@ -737,7 +737,12 @@ export default function HomePage() {
         {/* PERFIL JUGADOR */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 11, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>🎾 Mi perfil</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+  <div style={{ fontSize: 11, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>🎾 Mi perfil</div>
+  {(profile as any).es_premium && (
+    <div style={{ background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: 20, padding: '2px 10px', fontSize: 10, fontWeight: 800, color: '#0a0a0a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>⭐ Premium</div>
+  )}
+</div>
             <div onClick={() => { setNivelTemp(profile.nivel || ''); setCategoriaTemp(profile.categoria || ''); setEditandoPerfil(true) }} style={{ fontSize: 11, color: '#a3e635', cursor: 'pointer' }}>Editar</div>
           </div>
           {editandoPerfil ? (

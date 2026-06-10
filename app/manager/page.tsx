@@ -83,7 +83,7 @@ function formatTiempo(segundos: number) {
 
 export default function ManagerPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<'jugadores' | 'biblioteca'>('jugadores')
+  const [tab, setTab] = useState<'jugadores' | 'biblioteca' | 'mensajes'>('jugadores')
   const [jugadores, setJugadores] = useState<Jugador[]>([])
   const [biblioteca, setBiblioteca] = useState<BibliotecaItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -94,6 +94,8 @@ export default function ManagerPage() {
   const [mostrarFormBiblioteca, setMostrarFormBiblioteca] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
   const [mensajeExito, setMensajeExito] = useState('')
+  const [mensajesChat, setMensajesChat] = useState<any[]>([])
+const [respuestaTexto, setRespuestaTexto] = useState<Record<string, string>>({})
   const [depositosBanco, setDepositosBanco] = useState(0)
   const [pensamientos, setPensamientos] = useState<{ pensamiento_negativo: string, created_at: string }[]>([])
   const [tabJugador, setTabJugador] = useState<'registros' | 'graficos'>('registros')
@@ -117,7 +119,11 @@ export default function ManagerPage() {
       }))
       setJugadores(jugadoresConStats)
     }
-
+const { data: msgs } = await supabase
+  .from('mensajes_mica')
+  .select('*, profiles(nombre)')
+  .order('created_at', { ascending: false })
+setMensajesChat(msgs || [])
     const { data: bib } = await supabase.from('biblioteca').select('*').order('created_at', { ascending: false })
     if (bib) setBiblioteca(bib)
     setLoading(false)
@@ -610,7 +616,9 @@ async function togglePremium(jugador: Jugador) {
         </div>
 
         <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          {[{ id: 'jugadores', label: '👥 Jugadores' }, { id: 'biblioteca', label: '📚 Biblioteca' }].map(t => (
+          {[{ id: 'jugadores', label: '👥 Jugadores' },
+{ id: 'mensajes', label: '💬 Mensajes' },
+{ id: 'biblioteca', label: '📚 Biblioteca' },].map(t => (
             <button key={t.id} onClick={() => setTab(t.id as any)} style={{
               flex: 1, padding: '12px 8px', background: 'transparent', border: 'none',
               borderBottom: tab === t.id ? '2px solid #a3e635' : '2px solid transparent',
@@ -653,6 +661,57 @@ async function togglePremium(jugador: Jugador) {
             )}
           </div>
         )}
+
+{tab === 'mensajes' && (
+  <div>
+    <div style={{ fontSize: 13, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>
+      Mensajes de jugadores Premium
+    </div>
+    {mensajesChat.length === 0 ? (
+      <div style={{ textAlign: 'center', padding: '30px', color: '#555', fontSize: 13 }}>No hay mensajes todavía.</div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {mensajesChat.map((m, i) => (
+          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#a3e635' }}>{m.profiles?.nombre || 'Jugador'}</div>
+              <div style={{ fontSize: 11, color: '#555' }}>{new Date(m.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+            {m.tipo === 'audio' && m.audio_url ? (
+              <audio controls src={m.audio_url} style={{ width: '100%', height: 36, marginBottom: 10 }} />
+            ) : (
+              <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.5, marginBottom: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px' }}>{m.mensaje}</div>
+            )}
+            {m.respuesta ? (
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, padding: '10px 12px' }}>
+                <div style={{ fontSize: 10, color: '#f59e0b', marginBottom: 4, fontWeight: 700 }}>Tu respuesta</div>
+                <div style={{ fontSize: 13, color: '#ccc' }}>{m.respuesta}</div>
+              </div>
+            ) : (
+              <div>
+                <textarea
+                  value={respuestaTexto[m.id] || ''}
+                  onChange={e => setRespuestaTexto(prev => ({ ...prev, [m.id]: e.target.value }))}
+                  placeholder="Escribí tu respuesta..."
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '10px 12px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 70, lineHeight: 1.5, boxSizing: 'border-box', fontFamily: 'system-ui', marginBottom: 8 }}
+                />
+                <button onClick={async () => {
+                  const resp = respuestaTexto[m.id]
+                  if (!resp?.trim()) return
+                  await supabase.from('mensajes_mica').update({ respuesta: resp, leido: true }).eq('id', m.id)
+                  setMensajesChat(prev => prev.map(msg => msg.id === m.id ? { ...msg, respuesta: resp } : msg))
+                  setRespuestaTexto(prev => ({ ...prev, [m.id]: '' }))
+                }} style={{ width: '100%', background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 8, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Responder
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
         {tab === 'biblioteca' && (
           <div>
@@ -732,7 +791,9 @@ async function togglePremium(jugador: Jugador) {
       </div>
 
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
-        {[{ icon: '👥', label: 'Jugadores', tab: 'jugadores' }, { icon: '📚', label: 'Biblioteca', tab: 'biblioteca' }].map((t, i) => (
+        {[{ icon: '👥', label: 'Jugadores', tab: 'jugadores' },
+{ icon: '💬', label: 'Mensajes', tab: 'mensajes' },
+{ icon: '📚', label: 'Biblioteca', tab: 'biblioteca' },].map((t, i) => (
           <div key={i} onClick={() => setTab(t.tab as any)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '4px 0' }}>
             <span style={{ fontSize: 20 }}>{t.icon}</span>
             <span style={{ fontSize: 10, color: tab === t.tab ? '#a3e635' : '#666' }}>{t.label}</span>
