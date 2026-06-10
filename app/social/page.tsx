@@ -235,10 +235,13 @@ export default function SocialPage() {
                 </div>
               )
             })}
+
           </div>
         </div>
       </div>
     )}
+
+    
 
     {/* EXPERIENCIAS DEBAJO */}
     <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>Experiencias de la comunidad</div>
@@ -274,8 +277,42 @@ export default function SocialPage() {
   </div>
 )}
 
-      </div>
 
+      </div>
+{tab === 'experiencias' && (
+  <div>
+    {experiencias.length === 0 ? (
+      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555' }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>🎾</div>
+        <div style={{ fontSize: 14, marginBottom: 6 }}>Todavia no hay experiencias.</div>
+        <div style={{ fontSize: 12 }}>Se el primero en compartir!</div>
+      </div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {experiencias.map((exp, i) => (
+          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 22 }}>{exp.emoji}</span>
+              <div style={{ fontSize: 11, color: '#555' }}>Jugador anonimo · {formatTiempo(exp.created_at)}</div>
+            </div>
+            <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, marginBottom: 12 }}>{exp.texto}</div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div onClick={() => reaccionar(exp.id, 'like')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiLike ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiLike ? '1px solid rgba(239,68,68,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
+                <span style={{ fontSize: 15 }}>❤️</span>
+                <span style={{ fontSize: 12, color: exp.yoDiLike ? '#f87171' : '#888', fontWeight: exp.yoDiLike ? 700 : 400 }}>{exp.likes}</span>
+              </div>
+              <div onClick={() => reaccionar(exp.id, 'mepaso')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiMePaso ? 'rgba(163,230,53,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiMePaso ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
+                <span style={{ fontSize: 15 }}>☝️</span>
+                <span style={{ fontSize: 12, color: exp.yoDiMePaso ? '#a3e635' : '#888', fontWeight: exp.yoDiMePaso ? 700 : 400 }}>{exp.mePaso}</span>
+                <span style={{ fontSize: 11, color: exp.yoDiMePaso ? '#a3e635' : '#555' }}>Me paso</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: 'rgba(10,10,10,0.96)', borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', padding: '10px 0 20px', zIndex: 100 }}>
         {[
           { icon: '🏠', label: 'Inicio', path: '/home' },
