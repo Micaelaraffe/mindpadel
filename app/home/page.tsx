@@ -681,7 +681,7 @@ export default function HomePage() {
 
           <div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #f59e0b', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-    <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>Mensaje de tu Psicóloga Mica 🙋‍♀️</div>
+    <div style={{ fontSize: 11, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>Mensaje de tu Psico Mica 🙋‍♀️</div>
     <div onClick={() => router.push('/mica')} style={{ fontSize: 11, color: '#f59e0b', cursor: 'pointer', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: '3px 10px' }}>
       ⭐ Escribirle
     </div>
