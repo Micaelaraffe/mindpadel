@@ -200,78 +200,79 @@ export default function SocialPage() {
           ))}
         </div>
 
-        {tab === 'pregunta' && pregunta && (
-          <div>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 14 }}>Responde y mira lo que votaron otros jugadores</div>
-            <div style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(96,165,250,0.25)', borderRadius: 16, padding: 16 }}>
-              <div style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 10 }}>Pregunta del dia</div>
-              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, lineHeight: 1.4 }}>{pregunta.pregunta}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {pregunta.opciones.map((opcion, i) => {
-                  const total = Object.values(respuestas).reduce((a, b) => a + b, 0)
-                  const votos = respuestas[opcion] || 0
-                  const pct = total > 0 ? Math.round((votos / total) * 100) : 0
-                  const esMia = miRespuesta === opcion
-                  const yaVote = !!miRespuesta
-                  return (
-                    <div key={i} onClick={() => !yaVote && votar(opcion)} style={{
-                      background: esMia ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
-                      border: esMia ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)',
-                      borderRadius: 10, padding: '10px 12px', cursor: yaVote ? 'default' : 'pointer'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: yaVote ? 6 : 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: esMia ? 700 : 400, color: esMia ? '#a3e635' : '#ccc' }}>
-                          {opcion} {esMia ? 'v' : ''}
-                        </div>
-                        {yaVote && <div style={{ fontSize: 12, fontWeight: 700, color: esMia ? '#a3e635' : '#888' }}>{pct}%</div>}
-                      </div>
-                      {yaVote && (
-                        <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: pct + '%', background: esMia ? '#a3e635' : '#60a5fa', borderRadius: 2 }}></div>
-                        </div>
-                      )}
+        {tab === 'pregunta' && (
+  <div>
+    {pregunta && (
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, color: '#888', marginBottom: 14 }}>Responde y mira lo que votaron otros jugadores</div>
+        <div style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.08), rgba(168,85,247,0.08))', border: '1px solid rgba(96,165,250,0.25)', borderRadius: 16, padding: 16 }}>
+          <div style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 10 }}>Pregunta del dia</div>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, lineHeight: 1.4 }}>{pregunta.pregunta}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {pregunta.opciones.map((opcion, i) => {
+              const total = Object.values(respuestas).reduce((a, b) => a + b, 0)
+              const votos = respuestas[opcion] || 0
+              const pct = total > 0 ? Math.round((votos / total) * 100) : 0
+              const esMia = miRespuesta === opcion
+              const yaVote = !!miRespuesta
+              return (
+                <div key={i} onClick={() => !yaVote && votar(opcion)} style={{
+                  background: esMia ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+                  border: esMia ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)',
+                  borderRadius: 10, padding: '10px 12px', cursor: yaVote ? 'default' : 'pointer'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: yaVote ? 6 : 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: esMia ? 700 : 400, color: esMia ? '#a3e635' : '#ccc' }}>
+                      {opcion} {esMia ? 'v' : ''}
                     </div>
-                  )
-                })}
+                    {yaVote && <div style={{ fontSize: 12, fontWeight: 700, color: esMia ? '#a3e635' : '#888' }}>{pct}%</div>}
+                  </div>
+                  {yaVote && (
+                    <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: pct + '%', background: esMia ? '#a3e635' : '#60a5fa', borderRadius: 2 }}></div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* EXPERIENCIAS DEBAJO */}
+    <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>Experiencias de la comunidad</div>
+    {experiencias.length === 0 ? (
+      <div style={{ textAlign: 'center', padding: '30px 20px', color: '#555' }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>🎾</div>
+        <div style={{ fontSize: 13 }}>Todavia no hay experiencias.</div>
+      </div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {experiencias.map((exp, i) => (
+          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 22 }}>{exp.emoji}</span>
+              <div style={{ fontSize: 11, color: '#555' }}>Jugador anonimo · {formatTiempo(exp.created_at)}</div>
+            </div>
+            <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, marginBottom: 12 }}>{exp.texto}</div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div onClick={() => reaccionar(exp.id, 'like')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiLike ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiLike ? '1px solid rgba(239,68,68,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
+                <span style={{ fontSize: 15 }}>❤️</span>
+                <span style={{ fontSize: 12, color: exp.yoDiLike ? '#f87171' : '#888', fontWeight: exp.yoDiLike ? 700 : 400 }}>{exp.likes}</span>
+              </div>
+              <div onClick={() => reaccionar(exp.id, 'mepaso')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiMePaso ? 'rgba(163,230,53,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiMePaso ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
+                <span style={{ fontSize: 15 }}>☝️</span>
+                <span style={{ fontSize: 12, color: exp.yoDiMePaso ? '#a3e635' : '#888', fontWeight: exp.yoDiMePaso ? 700 : 400 }}>{exp.mePaso}</span>
+                <span style={{ fontSize: 11, color: exp.yoDiMePaso ? '#a3e635' : '#555' }}>Me paso</span>
               </div>
             </div>
           </div>
-        )}
-
-        {tab === 'experiencias' && (
-          <div>
-            {experiencias.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🎾</div>
-                <div style={{ fontSize: 14, marginBottom: 6 }}>Todavia no hay experiencias.</div>
-                <div style={{ fontSize: 12 }}>Se el primero en compartir!</div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {experiencias.map((exp, i) => (
-                  <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <span style={{ fontSize: 22 }}>{exp.emoji}</span>
-                      <div style={{ fontSize: 11, color: '#555' }}>Jugador anonimo · {formatTiempo(exp.created_at)}</div>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, marginBottom: 12 }}>{exp.texto}</div>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <div onClick={() => reaccionar(exp.id, 'like')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiLike ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiLike ? '1px solid rgba(239,68,68,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
-                        <span style={{ fontSize: 15 }}>❤️</span>
-                        <span style={{ fontSize: 12, color: exp.yoDiLike ? '#f87171' : '#888', fontWeight: exp.yoDiLike ? 700 : 400 }}>{exp.likes}</span>
-                      </div>
-                      <div onClick={() => reaccionar(exp.id, 'mepaso')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiMePaso ? 'rgba(163,230,53,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiMePaso ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
-                        <span style={{ fontSize: 15 }}>☝️</span>
-                        <span style={{ fontSize: 12, color: exp.yoDiMePaso ? '#a3e635' : '#888', fontWeight: exp.yoDiMePaso ? 700 : 400 }}>{exp.mePaso}</span>
-                        <span style={{ fontSize: 11, color: exp.yoDiMePaso ? '#a3e635' : '#555' }}>Me paso</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
       </div>
 
