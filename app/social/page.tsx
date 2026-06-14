@@ -267,7 +267,7 @@ export default function SocialPage() {
               <div onClick={() => reaccionar(exp.id, 'mepaso')} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', background: exp.yoDiMePaso ? 'rgba(163,230,53,0.1)' : 'rgba(255,255,255,0.04)', border: exp.yoDiMePaso ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '5px 12px' }}>
                 <span style={{ fontSize: 15 }}>☝️</span>
                 <span style={{ fontSize: 12, color: exp.yoDiMePaso ? '#a3e635' : '#888', fontWeight: exp.yoDiMePaso ? 700 : 400 }}>{exp.mePaso}</span>
-                <span style={{ fontSize: 11, color: exp.yoDiMePaso ? '#a3e635' : '#555' }}>Me paso</span>
+                <span style={{ fontSize: 11, color: exp.yoDiMePaso ? '#a3e635' : '#555' }}>Me pasa</span>
               </div>
             </div>
           </div>
