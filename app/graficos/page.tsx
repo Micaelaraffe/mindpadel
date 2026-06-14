@@ -35,6 +35,7 @@ export default function GraficosPage() {
   const [registros, setRegistros] = useState<Registro[]>([])
   const [loading, setLoading] = useState(true)
   const [esPremium, setEsPremium] = useState(false)
+  const [mostrarZorInfo, setMostrarZorInfo] = useState(false)
 
   useEffect(() => { loadData() }, [])
 
@@ -119,6 +120,31 @@ setEsPremium(perfil?.es_premium || false)
 
   return (
     <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
+      {/* POPUP ZOR */}
+{mostrarZorInfo && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+    onClick={() => setMostrarZorInfo(false)}>
+    <div onClick={e => e.stopPropagation()} style={{ background: '#111', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 390 }}>
+      <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, margin: '0 auto 20px' }}></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <span style={{ fontSize: 24 }}>⚡</span>
+        <div style={{ fontWeight: 800, fontSize: 16 }}>¿Qué es el ZOR?</div>
+      </div>
+      <div style={{ fontSize: 14, color: '#ccc', lineHeight: 1.7 }}>
+        El <span style={{ color: '#a3e635', fontWeight: 700 }}>ZOR (Zona Óptima de Rendimiento)</span> es el estado mental y de activación en el que cada deportista rinde mejor. Se basa en el modelo IZOF de Yuri Hanin y la Ley de Yerkes-Dodson.
+      </div>
+      <div style={{ fontSize: 14, color: '#ccc', lineHeight: 1.7, marginTop: 12 }}>
+        No es el mismo para todos: algunos rinden mejor relajados, otros necesitan activación alta. <span style={{ color: '#a3e635', fontWeight: 700 }}>Tu ZOR es individual</span> y se descubre analizando tus mejores sesiones.
+      </div>
+      <div style={{ fontSize: 14, color: '#ccc', lineHeight: 1.7, marginTop: 12 }}>
+        Cuantos más registros completes, más preciso va a ser tu patrón. Con al menos <span style={{ color: '#facc15', fontWeight: 700 }}>10 registros</span> empezás a ver tu zona con mayor claridad.
+      </div>
+      <button onClick={() => setMostrarZorInfo(false)} style={{ width: '100%', background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 20 }}>
+        Entendido 🧠
+      </button>
+    </div>
+  </div>
+)}
 
       {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
@@ -172,7 +198,10 @@ setEsPremium(perfil?.es_premium || false)
             {/* PATRÓN DETECTADO */}
             {patron && (
               <div style={{ background: 'rgba(255,255,255,0.03)', borderLeft: '3px solid #a3e635', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10, fontWeight: 700 }}>✦ Patrón detectado</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+  <div style={{ fontSize: 10, color: '#a3e635', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700 }}>✦ Patrón detectado</div>
+  <div onClick={() => setMostrarZorInfo(true)} style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#a3e635', cursor: 'pointer', fontWeight: 700 }}>?</div>
+</div>
                 <div style={{ fontSize: 13, color: '#888', marginBottom: 12, lineHeight: 1.5 }}>
                   En tus {sesionesBuenas.length} mejores sesiones, tu ZOR promedio fue:
                 </div>
