@@ -199,8 +199,9 @@ function RankingSection({ userId }: { userId: string }) {
 }
 
 function JuegoReaccion({ userId, onSalir }: { userId: string, onSalir: () => void }) {
-  const [estado, setEstado] = useState<'esperando' | 'listo' | 'activo' | 'resultado' | 'muyrapido'>('esperando')
+  const [estado, setEstado] = useState<'esperando' | 'listo' | 'activo' | 'resultado' | 'muyrapido' | 'final'>('esperando')
   const [tiempo, setTiempo] = useState<number | null>(null)
+  const [intentos, setIntentos] = useState<number[]>([])
   const inicioRef = useRef<number>(0)
   const timeoutRef = useRef<any>(null)
 
@@ -213,6 +214,12 @@ function JuegoReaccion({ userId, onSalir }: { userId: string, onSalir: () => voi
     }, delay)
   }
 
+  function reiniciarTodo() {
+    setIntentos([])
+    setTiempo(null)
+    empezar()
+  }
+
   function tocar() {
     if (estado === 'listo') {
       clearTimeout(timeoutRef.current)
@@ -222,20 +229,30 @@ function JuegoReaccion({ userId, onSalir }: { userId: string, onSalir: () => voi
     if (estado === 'activo') {
       const ms = Date.now() - inicioRef.current
       setTiempo(ms)
-      setEstado('resultado')
-      supabase.from('juegos_resultados').insert({ user_id: userId, juego: 'reaccion', puntaje: ms })
+      const nuevosIntentos = [...intentos, ms]
+      setIntentos(nuevosIntentos)
+
+      if (nuevosIntentos.length >= 3) {
+        const promedio = Math.round(nuevosIntentos.reduce((a, b) => a + b, 0) / nuevosIntentos.length)
+        setEstado('final')
+        supabase.from('juegos_resultados').insert({ user_id: userId, juego: 'reaccion', puntaje: promedio })
+      } else {
+        setEstado('resultado')
+      }
     }
   }
+
+  const promedioFinal = intentos.length === 3 ? Math.round(intentos.reduce((a, b) => a + b, 0) / 3) : null
 
   return (
     <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' }}>
         <div onClick={onSalir} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(163,230,53,0.15)', border: '1.5px solid rgba(163,230,53,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer', color: '#a3e635' }}>←</div>
         <div style={{ fontWeight: 700, fontSize: 14 }}>⚡ Tiempo de reacción</div>
-        <div style={{ width: 32 }}></div>
+        <div style={{ width: 32, textAlign: 'right', fontSize: 12, color: '#888' }}>{estado !== 'esperando' && estado !== 'final' ? `${intentos.length}/3` : ''}</div>
       </div>
 
-      <div onClick={estado === 'esperando' || estado === 'resultado' || estado === 'muyrapido' ? undefined : tocar}
+      <div onClick={estado === 'esperando' || estado === 'resultado' || estado === 'muyrapido' || estado === 'final' ? undefined : tocar}
         style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16,
           background: estado === 'activo' ? '#a3e635' : estado === 'listo' ? '#1a1a1a' : 'transparent',
@@ -244,12 +261,12 @@ function JuegoReaccion({ userId, onSalir }: { userId: string, onSalir: () => voi
         {estado === 'esperando' && (
           <>
             <div style={{ fontSize: 50 }}>⚡</div>
-            <div style={{ fontSize: 15, color: '#888', textAlign: 'center', padding: '0 40px' }}>Tocá el botón y esperá a que la pantalla se vuelva verde. Ahí tocá lo más rápido posible.</div>
-            <button onClick={empezar} style={{ background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 14, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>Empezar</button>
+            <div style={{ fontSize: 15, color: '#888', textAlign: 'center', padding: '0 40px' }}>Tocá el botón y esperá a que la pantalla se vuelva verde. Tenés 3 intentos.</div>
+            <button onClick={reiniciarTodo} style={{ background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 14, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>Empezar</button>
           </>
         )}
         {estado === 'listo' && (
-          <div style={{ fontSize: 18, color: '#888' }}>Esperá...</div>
+          <div style={{ fontSize: 18, color: '#888' }}>Esperá... (intento {intentos.length + 1}/3)</div>
         )}
         {estado === 'activo' && (
           <div style={{ fontSize: 24, fontWeight: 800, color: '#0a0a0a' }}>¡TOCÁ AHORA!</div>
@@ -265,10 +282,24 @@ function JuegoReaccion({ userId, onSalir }: { userId: string, onSalir: () => voi
           <>
             <div style={{ fontSize: 40 }}>🎯</div>
             <div style={{ fontSize: 36, fontWeight: 900, color: '#a3e635' }}>{tiempo} ms</div>
-            <div style={{ fontSize: 13, color: '#888' }}>
-              {tiempo! < 250 ? '¡Reflejos de élite!' : tiempo! < 350 ? 'Muy buen tiempo' : tiempo! < 450 ? 'Buen tiempo' : 'Seguí practicando'}
+            <div style={{ fontSize: 13, color: '#888' }}>Intento {intentos.length}/3</div>
+            <button onClick={empezar} style={{ background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 14, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>Siguiente intento</button>
+          </>
+        )}
+        {estado === 'final' && (
+          <>
+            <div style={{ fontSize: 40 }}>🏁</div>
+            <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>Promedio de tus 3 intentos</div>
+            <div style={{ fontSize: 36, fontWeight: 900, color: '#a3e635' }}>{promedioFinal} ms</div>
+            <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
+              {promedioFinal! < 250 ? '¡Reflejos de élite!' : promedioFinal! < 350 ? 'Muy buen tiempo' : promedioFinal! < 450 ? 'Buen tiempo' : 'Seguí practicando'}
             </div>
-            <button onClick={empezar} style={{ background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 14, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 10 }}>Jugar de nuevo</button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              {intentos.map((t, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#888' }}>{t} ms</div>
+              ))}
+            </div>
+            <button onClick={reiniciarTodo} style={{ background: '#a3e635', color: '#0a0a0a', border: 'none', borderRadius: 14, padding: '14px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 16 }}>Jugar de nuevo</button>
             <button onClick={onSalir} style={{ background: 'transparent', color: '#666', border: 'none', padding: 10, fontSize: 13, cursor: 'pointer' }}>Volver</button>
           </>
         )}
@@ -299,21 +330,22 @@ function JuegoDiferente({ userId, onSalir }: { userId: string, onSalir: () => vo
   }
 
   function empezar() {
-    setAciertos(0)
-    setTiempoRestante(30)
-    generarGrilla()
-    setEstado('jugando')
-    intervalRef.current = setInterval(() => {
-      setTiempoRestante(prev => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current)
-          setEstado('fin')
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-  }
+  setAciertos(0)
+  setTiempoRestante(30)
+  generarGrilla()
+  setEstado('jugando')
+  if (intervalRef.current) clearInterval(intervalRef.current)
+  intervalRef.current = setInterval(() => {
+    setTiempoRestante(prev => {
+      if (prev <= 1) {
+        if (intervalRef.current) clearInterval(intervalRef.current)
+        setEstado('fin')
+        return 0
+      }
+      return prev - 1
+    })
+  }, 1000)
+}
 
   function elegir(i: number) {
     if (estado !== 'jugando') return
