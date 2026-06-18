@@ -83,6 +83,15 @@ setEsPremium(perfil?.es_premium || false)
           <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Contenido de tu psicóloga</div>
         </div>
 
+        <div onClick={() => router.push('/juegos')} style={{ background: 'rgba(163,230,53,0.06)', border: '1px solid rgba(163,230,53,0.2)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', marginBottom: 16 }}>
+  <div style={{ fontSize: 24 }}>🧠</div>
+  <div style={{ flex: 1 }}>
+    <div style={{ fontSize: 14, fontWeight: 700, color: '#a3e635' }}>Juegos mentales</div>
+    <div style={{ fontSize: 11, color: '#888', marginTop: 1 }}>Entrená reacción y atención</div>
+  </div>
+  <div style={{ color: '#a3e635', fontSize: 16 }}>→</div>
+</div>
+
         {/* FILTROS */}
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 16, marginBottom: 4 }}>
           {tags.map(tag => (
