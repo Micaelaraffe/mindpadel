@@ -678,24 +678,23 @@ export default function HomePage() {
 </div>
 
         {/* CTA REGISTRAR */}
-        <div onClick={() => router.push('/registrar')} style={{ background: '#a3e635', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: 14 }}>
-          <div>
-            {/* JUEGOS MENTALES */}
-<div onClick={() => router.push('/juegos')} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', marginBottom: 14 }}>
-  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(163,230,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🧠</div>
-  <div style={{ flex: 1 }}>
-    <div style={{ fontSize: 14, fontWeight: 700 }}>Juegos mentales</div>
-    <div style={{ fontSize: 11, color: '#666', marginTop: 1 }}>Calentá la mente antes de jugar</div>
-  </div>
-  <div style={{ color: '#666', fontSize: 16 }}>→</div>
-</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#0a0a0a' }}>+ Hacer Nuevo Registro</div>
+        <div onClick={() => router.push('/registrar')} style={{ background: '#a3e635', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: 16 }}>
+  <div>
+    <div style={{ fontSize: 15, fontWeight: 800, color: '#0a0a0a' }}>+ Hacer Nuevo Registro</div>
             <div style={{ fontSize: 11, color: 'rgba(0,0,0,0.45)', marginTop: 1 }}>Suma más MM a tu semana</div>
           </div>
           <div style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#0a0a0a' }}>→</div>
         </div>
 
-       
+       {/* JUEGOS MENTALES */}
+<div onClick={() => router.push('/juegos')} style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', marginTop: 4, marginBottom: 16 }}>
+  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(163,230,53,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🧠</div>
+  <div style={{ flex: 1 }}>
+    <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f0' }}>Juegos mentales</div>
+    <div style={{ fontSize: 11, color: '#777', marginTop: 1 }}>Calentá la mente antes de jugar</div>
+  </div>
+  <div style={{ color: '#a3e635', fontSize: 18 }}>→</div>
+</div>
 
         {/*INSIGHT */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
