@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import PremiumBloqueado from '../components/PremiumBloqueado'
 
 type Registro = {
@@ -20,6 +20,8 @@ type Registro = {
   frase_ayudo: string
   aprendizajes: string
   created_at: string
+  resultado_partido: string | null
+  marcador: string | null
 }
 
 const tooltipStyle = {
@@ -367,6 +369,160 @@ setEsPremium(perfil?.es_premium || false)
   )
 })() : <PremiumBloqueado />}
 
+{/* RENDIMIENTO MENTAL VS RESULTADO */}
+{(() => {
+  const conResultado = registros.filter(r => r.resultado_partido)
+  if (conResultado.length < 2) return null
+
+  const ganados = conResultado.filter(r => r.resultado_partido === 'gane')
+  const perdidos = conResultado.filter(r => r.resultado_partido === 'perdi')
+  const empatados = conResultado.filter(r => r.resultado_partido === 'empate')
+
+  if (ganados.length === 0 && perdidos.length === 0) return null
+
+  function promedio(regs: typeof registros, key: keyof typeof registros[0]) {
+    if (regs.length === 0) return 0
+    return Number((regs.reduce((s, r) => s + (r[key] as number || 0), 0) / regs.length).toFixed(1))
+  }
+
+  const data = [
+    {
+      metrica: 'Rendimiento',
+      Ganados: promedio(ganados, 'resultado' as any),
+      Perdidos: promedio(perdidos, 'resultado' as any),
+    },
+    {
+      metrica: 'Concentración',
+      Ganados: promedio(ganados, 'concentracion'),
+      Perdidos: promedio(perdidos, 'concentracion'),
+    },
+    {
+      metrica: 'Confianza',
+      Ganados: promedio(ganados, 'confianza'),
+      Perdidos: promedio(perdidos, 'confianza'),
+    },
+    {
+      metrica: 'Motivación',
+      Ganados: promedio(ganados, 'motivacion'),
+      Perdidos: promedio(perdidos, 'motivacion'),
+    },
+    {
+      metrica: 'Frustración',
+      Ganados: promedio(ganados, 'frustracion'),
+      Perdidos: promedio(perdidos, 'frustracion'),
+    },
+  ]
+
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#888', marginBottom: 4 }}>🏆 Mente en victorias vs derrotas</div>
+      <div style={{ fontSize: 12, color: '#666', marginBottom: 14 }}>Promedio de cada dimensión según el resultado</div>
+
+      <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: '#a3e635' }}></div>
+          <span style={{ fontSize: 11, color: '#888' }}>Ganados ({ganados.length})</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: '#f87171' }}></div>
+          <span style={{ fontSize: 11, color: '#888' }}>Perdidos ({perdidos.length})</span>
+        </div>
+        {empatados.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: '#facc15' }}></div>
+            <span style={{ fontSize: 11, color: '#888' }}>Empates ({empatados.length})</span>
+          </div>
+        )}
+      </div>
+
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+          <XAxis dataKey="metrica" tick={{ fill: '#888', fontSize: 9 }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 10]} tick={{ fill: '#888', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={tooltipStyle} />
+          <Bar dataKey="Ganados" fill="#a3e635" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Perdidos" fill="#f87171" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {data.map((m, i) => {
+          const diff = m.Ganados - m.Perdidos
+          if (Math.abs(diff) < 0.5 || m.Perdidos === 0) return null
+          const esFrustracion = m.metrica === 'Frustración'
+          const mensaje = esFrustracion
+            ? diff < 0 ? `Tu ${m.metrica} es menor cuando ganás — eso tiene mucho sentido 💡` : `Tu ${m.metrica} es mayor cuando ganás — hay margen para trabajarlo`
+            : diff > 0 ? `Tu ${m.metrica} es mayor cuando ganás (${Math.abs(diff).toFixed(1)} pts)` : `Tu ${m.metrica} es mayor cuando perdés — trabajemos eso`
+          return (
+            <div key={i} style={{ fontSize: 12, color: '#888', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <span style={{ color: '#a3e635', flexShrink: 0 }}>→</span>
+              <span>{mensaje}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+})()}
+
+{/* EVOLUCIÓN DEL RENDIMIENTO POR RESULTADO */}
+{(() => {
+  const conResultado = registros.filter(r => r.resultado_partido && r.resultado_partido !== 'empate')
+  if (conResultado.length < 3) return null
+
+  const data = registros.map((r, i) => ({
+    sesion: `S${i + 1}`,
+    rendimiento: Number(r.resultado) || 0,
+    resultado: r.resultado_partido || null,
+  }))
+
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#888', marginBottom: 4 }}>📈 Evolución del rendimiento</div>
+      <div style={{ fontSize: 12, color: '#666', marginBottom: 14 }}>Verde = ganaste · Rojo = perdiste</div>
+
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+          <XAxis dataKey="sesion" tick={{ fill: '#888', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 10]} tick={{ fill: '#888', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <Tooltip
+            contentStyle={tooltipStyle}
+            formatter={(value: any, name: any, props: any) => {
+              const r = props.payload?.resultado
+              const label = r === 'gane' ? '✅ Ganaste' : r === 'perdi' ? '❌ Perdiste' : '—'
+              return [value, label]
+            }}
+          />
+          <Bar dataKey="rendimiento" radius={[4, 4, 0, 0]}>
+  {data.map((entry, index) => (
+    <Cell
+      key={index}
+      fill={entry.resultado === 'gane' ? '#a3e635' : entry.resultado === 'perdi' ? '#f87171' : '#555'}
+    />
+  ))}
+</Bar>
+        </BarChart>
+      </ResponsiveContainer>
+
+      <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: '#a3e635' }}></div>
+          <span style={{ fontSize: 10, color: '#666' }}>Victoria</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: '#f87171' }}></div>
+          <span style={{ fontSize: 10, color: '#666' }}>Derrota</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: '#555' }}></div>
+          <span style={{ fontSize: 10, color: '#666' }}>Sin resultado</span>
+        </div>
+      </div>
+    </div>
+  )
+})()}
 
         {/* FRASES Y APRENDIZAJES */}
         <div style={{ marginBottom: 12 }}>

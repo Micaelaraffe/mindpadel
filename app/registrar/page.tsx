@@ -35,6 +35,8 @@ export default function RegistrarPage() {
   const [pensamientos, setPensamientos] = useState('')
   const [fraseAyudo, setFraseAyudo] = useState('')
   const [aprendizajes, setAprendizajes] = useState('')
+  const [resultadoPartido, setResultadoPartido] = useState<'gane' | 'perdi' | 'empate' | ''>('')
+const [marcador, setMarcador] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [guardado, setGuardado] = useState(false)
   const [error, setError] = useState('')
@@ -74,6 +76,8 @@ export default function RegistrarPage() {
     
 
     const { error: insertError } = await supabase.from('registros').insert({
+      resultado_partido: resultadoPartido || null,
+marcador: marcador.trim() || null,
       user_id: user.id,
       tipo: subtipo || tipo,
       resultado: String(rendimiento),
@@ -189,6 +193,40 @@ export default function RegistrarPage() {
     </div>
   )}
 </div>
+
+{/* RESULTADO */}
+{tipo && (
+  <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
+    <div style={{ fontSize: 10, color: '#a3e635', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 12 }}>🏆 ¿Cómo fue el resultado?</div>
+    <div style={{ display: 'flex', gap: 8, marginBottom: tipo === 'Partido' || subtipo ? 14 : 0 }}>
+      {[
+        { id: 'gane', label: '🥇 Ganado', color: '#a3e635', rgb: '163,230,53' },
+        { id: 'perdi', label: '😌 Perdido', color: '#f87171', rgb: '248,113,113' },
+        { id: 'empate', label: '🤝 Empate', color: '#facc15', rgb: '250,204,21' },
+      ].map(op => (
+        <button key={op.id} onClick={() => setResultadoPartido(op.id as any)} style={{
+          flex: 1, padding: '10px 4px',
+          background: resultadoPartido === op.id ? `rgba(${op.rgb}, 0.12)` : 'rgba(255,255,255,0.03)',
+          border: resultadoPartido === op.id ? `1.5px solid rgba(${op.rgb}, 0.4)` : '0.5px solid rgba(255,255,255,0.08)',
+          borderRadius: 10, color: resultadoPartido === op.id ? op.color : '#666',
+          fontSize: 12, cursor: 'pointer', fontWeight: 600
+        }}>{op.label}</button>
+      ))}
+    </div>
+    {(tipo === 'Partido' || subtipo === 'Partido amistoso' || subtipo === 'Torneo') && (
+      <>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>Marcador (opcional)</div>
+        <input
+          type="text"
+          value={marcador}
+          onChange={e => setMarcador(e.target.value)}
+          placeholder="Ej: 6-4, 7-5"
+          style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 14px', color: '#f0f0f0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'system-ui' }}
+        />
+      </>
+    )}
+  </div>
+)}
 
           {/* RENDIMIENTO */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
