@@ -94,6 +94,7 @@ export default function ManagerPage() {
   const [mostrarFormBiblioteca, setMostrarFormBiblioteca] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
   const [mensajeExito, setMensajeExito] = useState('')
+  const [exportando, setExportando] = useState(false)
   const [mensajesChat, setMensajesChat] = useState<any[]>([])
 const [respuestaTexto, setRespuestaTexto] = useState<Record<string, string>>({})
   const [depositosBanco, setDepositosBanco] = useState(0)
@@ -247,6 +248,56 @@ async function togglePremium(jugador: Jugador) {
     router.push('/')
   }
 
+async function exportarFrasesYAprendizajes() {
+  setExportando(true)
+  const { data } = await supabase
+    .from('registros')
+    .select('frase_ayudo, aprendizajes')
+    .or('frase_ayudo.neq.,aprendizajes.neq.')
+    .order('created_at', { ascending: false })
+
+  const frases = data
+    ?.filter(r => r.frase_ayudo && r.frase_ayudo.trim().length > 3)
+    .map(r => `✦ "${r.frase_ayudo.trim()}"`) || []
+
+  const aprendizajes = data
+    ?.filter(r => r.aprendizajes && r.aprendizajes.trim().length > 3)
+    .map(r => `• ${r.aprendizajes.trim()}`) || []
+
+  const contenido = [
+    '═══════════════════════════════════',
+    '   PÁDEL MENTAL APP',
+    '   by Ps. Mica Raffe',
+    '   @micaraffe.psi',
+    '═══════════════════════════════════',
+    '',
+    '💬 FRASES QUE AYUDARON A RENDIR MEJOR',
+    '───────────────────────────────────',
+    '',
+    ...frases,
+    '',
+    '',
+    '💡 APRENDIZAJES DE LA CANCHA',
+    '───────────────────────────────────',
+    '',
+    ...aprendizajes,
+    '',
+    '═══════════════════════════════════',
+    `Total: ${frases.length} frases · ${aprendizajes.length} aprendizajes`,
+    'mindpadel.vercel.app',
+    '═══════════════════════════════════',
+  ].join('\n')
+
+  const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'padel-mental-frases-aprendizajes.txt'
+  link.click()
+  URL.revokeObjectURL(url)
+  setExportando(false)
+}
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a3e635', fontFamily: 'system-ui' }}>Cargando...</div>
   )
@@ -292,6 +343,8 @@ async function togglePremium(jugador: Jugador) {
       confianza: (sesionesBuenas.reduce((s, r) => s + r.confianza, 0) / sesionesBuenas.length).toFixed(1),
       desafio: (sesionesBuenas.reduce((s, r) => s + r.desafio, 0) / sesionesBuenas.length).toFixed(1),
     } : null
+
+
 
     return (
       <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
@@ -629,38 +682,57 @@ async function togglePremium(jugador: Jugador) {
         </div>
 
         {tab === 'jugadores' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {jugadores.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555', fontSize: 14 }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>👥</div>
-                <div>Todavía no hay jugadores registrados.</div>
+  <>
+    <div onClick={exportarFrasesYAprendizajes} style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      background: 'rgba(163,230,53,0.08)', border: '1px solid rgba(163,230,53,0.2)',
+      borderRadius: 12, padding: '12px 16px', cursor: 'pointer', marginBottom: 16
+    }}>
+      <span style={{ fontSize: 20 }}>📥</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#a3e635' }}>
+          {exportando ? 'Exportando...' : 'Exportar frases y aprendizajes'}
+        </div>
+        <div style={{ fontSize: 11, color: '#666', marginTop: 1 }}>
+          Descargá un .txt para usar en Canva
+        </div>
+      </div>
+      <span style={{ fontSize: 16, color: '#a3e635' }}>↓</span>
+    </div>
+
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {jugadores.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#555', fontSize: 14 }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>👥</div>
+          <div>Todavía no hay jugadores registrados.</div>
+        </div>
+      ) : (
+        jugadores.map((j, i) => (
+          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div onClick={() => verJugador(j)} style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(163,230,53,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: '#a3e635', flexShrink: 0, cursor: 'pointer' }}>
+              {j.nombre.charAt(0).toUpperCase()}
+            </div>
+            <div onClick={() => verJugador(j)} style={{ flex: 1, cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>{j.nombre}</div>
+                {j.es_premium && (
+                  <div style={{ background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 800, color: '#0a0a0a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Premium</div>
+                )}
               </div>
-            ) : (
-              jugadores.map((j, i) => (
-                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div onClick={() => verJugador(j)} style={{ width: 46, height: 46, borderRadius: 12, background: 'rgba(163,230,53,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, color: '#a3e635', flexShrink: 0, cursor: 'pointer' }}>
-                    {j.nombre.charAt(0).toUpperCase()}
-                  </div>
-                  <div onClick={() => verJugador(j)} style={{ flex: 1, cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-  <div style={{ fontWeight: 600, fontSize: 15 }}>{j.nombre}</div>
-  {j.es_premium && (
-    <div style={{ background: 'linear-gradient(90deg, #facc15, #f59e0b)', borderRadius: 20, padding: '2px 8px', fontSize: 9, fontWeight: 800, color: '#0a0a0a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Premium</div>
-  )}
-</div>
-                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-                      {j.totalRegistros} registros · {j.ultimoRegistro ? formatFecha(j.ultimoRegistro) : 'Sin registros'}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div onClick={() => verJugador(j)} style={{ color: '#a3e635', fontSize: 18, cursor: 'pointer' }}>→</div>
-                    <div onClick={() => eliminarJugador(j.id)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14 }}>🗑️</div>
-                  </div>
-                </div>
-              ))
-            )}
+              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                {j.totalRegistros} registros · {j.ultimoRegistro ? formatFecha(j.ultimoRegistro) : 'Sin registros'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div onClick={() => verJugador(j)} style={{ color: '#a3e635', fontSize: 18, cursor: 'pointer' }}>→</div>
+              <div onClick={() => eliminarJugador(j.id)} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14 }}>🗑️</div>
+            </div>
           </div>
-        )}
+        ))
+      )}
+    </div>
+  </>
+)}
 
 {tab === 'mensajes' && (
   <div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import JuegoDiferente from './diferente'
+import JuegoTieBreak from './tiebreak'
 
 type RankingItem = {
   nombre: string
@@ -13,7 +14,7 @@ type RankingItem = {
 
 export default function JuegosPage() {
   const router = useRouter()
-  const [vista, setVista] = useState<'menu' | 'reaccion' | 'diferente'>('menu')
+  const [vista, setVista] = useState<'menu' | 'reaccion' | 'diferente' | 'tiebreak'>('menu')
   const [userId, setUserId] = useState('')
   const [mejorReaccion, setMejorReaccion] = useState<number | null>(null)
   const [mejorDiferente, setMejorDiferente] = useState<number | null>(null)
@@ -49,6 +50,7 @@ export default function JuegosPage() {
 
   if (vista === 'reaccion') return <JuegoReaccion userId={userId} onSalir={() => { setVista('menu'); cargar() }} />
 if (vista === 'diferente') return <JuegoDiferente userId={userId} onSalir={() => { setVista('menu'); cargar() }} />
+if (vista === 'tiebreak') return <JuegoTieBreak userId={userId} onSalir={() => { setVista('menu'); cargar() }} />
 
   return (
     <main style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', color: '#f0f0f0', width: '100%' }}>
@@ -90,6 +92,15 @@ if (vista === 'diferente') return <JuegoDiferente userId={userId} onSalir={() =>
           <div style={{ color: '#666', fontSize: 16 }}>→</div>
         </div>
 
+<div onClick={() => setVista('tiebreak')} style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, cursor: 'pointer' }}>
+  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(163,230,53,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🧠</div>
+  <div style={{ flex: 1 }}>
+    <div style={{ fontSize: 14, fontWeight: 700 }}>Juega un Tie Break Mental</div>
+    <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>7 decisiones bajo presión — ¿cerrás el tie break?</div>
+  </div>
+  <div style={{ color: '#666', fontSize: 16 }}>→</div>
+</div>
+
         <RankingSection userId={userId} />
       </div>
 
@@ -112,7 +123,7 @@ if (vista === 'diferente') return <JuegoDiferente userId={userId} onSalir={() =>
 }
 
 function RankingSection({ userId }: { userId: string }) {
-  const [tab, setTab] = useState<'reaccion' | 'diferente'>('reaccion')
+  const [tab, setTab] = useState<'reaccion' | 'diferente' | 'tiebreak'>('reaccion')
   const [ranking, setRanking] = useState<RankingItem[]>([])
   const [mostrarEnRanking, setMostrarEnRanking] = useState(false)
   const [cargandoRanking, setCargandoRanking] = useState(true)
@@ -125,7 +136,7 @@ function RankingSection({ userId }: { userId: string }) {
     const { data: perfil } = await supabase.from('profiles').select('mostrar_en_ranking').eq('id', userId).single()
     setMostrarEnRanking(perfil?.mostrar_en_ranking || false)
 
-    const ascending = true
+    const ascending = tab === 'reaccion' || tab === 'diferente'
     const { data: resultados } = await supabase
       .from('juegos_resultados')
       .select('puntaje, user_id, profiles(nombre, mostrar_en_ranking)')
@@ -167,6 +178,7 @@ function RankingSection({ userId }: { userId: string }) {
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button onClick={() => setTab('reaccion')} style={{ flex: 1, padding: '8px', background: tab === 'reaccion' ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)', border: tab === 'reaccion' ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, color: tab === 'reaccion' ? '#a3e635' : '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>⚡ Reacción</button>
         <button onClick={() => setTab('diferente')} style={{ flex: 1, padding: '8px', background: tab === 'diferente' ? 'rgba(250,204,21,0.12)' : 'rgba(255,255,255,0.03)', border: tab === 'diferente' ? '1px solid rgba(250,204,21,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, color: tab === 'diferente' ? '#facc15' : '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>🎯 Atención</button>
+        <button onClick={() => setTab('tiebreak')} style={{ flex: 1, padding: '8px', background: tab === 'tiebreak' ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)', border: tab === 'tiebreak' ? '1px solid rgba(163,230,53,0.3)' : '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, color: tab === 'tiebreak' ? '#a3e635' : '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>🧠 Tie Break</button>
       </div>
 
       <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '8px 0', marginBottom: 12 }}>
@@ -184,7 +196,7 @@ function RankingSection({ userId }: { userId: string }) {
                 {r.nombre} {r.esYo ? '(vos)' : ''}
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#f0f0f0' }}>
-                {tab === 'reaccion' ? `${r.puntaje} ms` : `${r.puntaje}s`}
+                {tab === 'reaccion' ? `${r.puntaje} ms` : tab === 'diferente' ? `${r.puntaje}s` : `${r.puntaje}/7`}
               </div>
             </div>
           ))
