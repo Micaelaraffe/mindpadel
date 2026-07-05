@@ -101,6 +101,7 @@ const [respuestaTexto, setRespuestaTexto] = useState<Record<string, string>>({})
   const [pensamientos, setPensamientos] = useState<{ pensamiento_negativo: string, created_at: string }[]>([])
   const [tabJugador, setTabJugador] = useState<'registros' | 'graficos'>('registros')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [consultas, setConsultas] = useState<any[]>([])
 
   const [nuevoItem, setNuevoItem] = useState({
     titulo: '', descripcion: '', tipo: 'PDF', tag: '', url: '',
@@ -109,9 +110,13 @@ const [respuestaTexto, setRespuestaTexto] = useState<Record<string, string>>({})
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
+
+    
     const { data: players } = await supabase
       .from('profiles').select('*').eq('role', 'player').order('created_at', { ascending: false })
 
+
+      
     if (players) {
       const jugadoresConStats = await Promise.all(players.map(async (p) => {
         const { data: regs } = await supabase
@@ -120,6 +125,8 @@ const [respuestaTexto, setRespuestaTexto] = useState<Record<string, string>>({})
       }))
       setJugadores(jugadoresConStats)
     }
+
+    
 const { data: msgs } = await supabase
   .from('mensajes_mica')
   .select('*, profiles(nombre)')
@@ -127,6 +134,13 @@ const { data: msgs } = await supabase
 setMensajesChat(msgs || [])
     const { data: bib } = await supabase.from('biblioteca').select('*').order('created_at', { ascending: false })
     if (bib) setBiblioteca(bib)
+
+    const { data: consultas } = await supabase
+      .from('consultas_servicios')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setConsultas(consultas || [])
+
     setLoading(false)
   }
 
@@ -782,6 +796,29 @@ async function exportarFrasesYAprendizajes() {
         ))}
       </div>
     )}
+
+    {/* CONSULTAS DE SERVICIOS */}
+    {consultas.length > 0 && (
+      <div style={{ marginTop: 24 }}>
+        <div style={{ fontSize: 12, color: '#888', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>📋 Consultas de servicios</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {consultas.map((c, i) => (
+            <div key={i} style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 12, padding: '12px 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b' }}>{c.nombre}</div>
+                <div style={{ fontSize: 11, color: '#555' }}>{new Date(c.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</div>
+              </div>
+              <div style={{ fontSize: 11, color: '#f59e0b', marginBottom: 6, background: 'rgba(245,158,11,0.1)', borderRadius: 6, padding: '2px 8px', display: 'inline-block' }}>{c.servicio}</div>
+              {c.telefono && (
+  <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>📱 {c.telefono}</div>
+)}
+              <div style={{ fontSize: 13, color: '#ccc', lineHeight: 1.5 }}>{c.mensaje}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
   </div>
 )}
 

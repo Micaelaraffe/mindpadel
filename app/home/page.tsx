@@ -310,6 +310,12 @@ export default function HomePage() {
   const [preguntaAbierta, setPreguntaAbierta] = useState(false)
   const [editandoPerfil, setEditandoPerfil] = useState(false)
   const [mostrarPremiumTooltip, setMostrarPremiumTooltip] = useState(false)
+  const [mostrarConsulta, setMostrarConsulta] = useState(false)
+const [consultaServicio, setConsultaServicio] = useState('Sesión individual')
+const [consultaMensaje, setConsultaMensaje] = useState('')
+const [consultaTelefono, setConsultaTelefono] = useState('')
+const [enviandoConsulta, setEnviandoConsulta] = useState(false)
+const [consultaEnviada, setConsultaEnviada] = useState(false)
   const [nivelTemp, setNivelTemp] = useState('')
   const [categoriaTemp, setCategoriaTemp] = useState('')
 
@@ -449,7 +455,26 @@ export default function HomePage() {
   setRespuestas(prev => ({ ...prev, [opcion]: (prev[opcion] || 0) + 1 }))
   setVotando(false)
 }
-
+async function enviarConsulta() {
+  if (!consultaMensaje.trim()) return
+  setEnviandoConsulta(true)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await supabase.from('consultas_servicios').insert({
+    user_id: user.id,
+    nombre: profile.nombre,
+    servicio: consultaServicio,
+    mensaje: consultaMensaje,
+    telefono: consultaTelefono.trim() || null,
+  })
+  setEnviandoConsulta(false)
+  setConsultaEnviada(true)
+  setTimeout(() => {
+    setMostrarConsulta(false)
+    setConsultaEnviada(false)
+    setConsultaMensaje('')
+  }, 2500)
+}
   async function cerrarSesion() {
     await supabase.auth.signOut()
     router.push('/')
@@ -518,6 +543,63 @@ export default function HomePage() {
       <div style={{ position: 'absolute', top: '700px', right: '-50px', width: '180px', height: '180px', borderRadius: '50%', background: 'rgba(250,204,21,0.03)' }}></div>
       <div style={{ position: 'absolute', top: '900px', left: '-60px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(163,230,53,0.03)' }}></div>
     </div>
+
+{/* MODAL CONSULTA SERVICIOS */}
+{mostrarConsulta && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+    onClick={() => setMostrarConsulta(false)}>
+    <div onClick={e => e.stopPropagation()} style={{ background: '#111', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 390 }}>
+      <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, margin: '0 auto 20px' }}></div>
+
+      {consultaEnviada ? (
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>¡Consulta enviada!</div>
+          <div style={{ fontSize: 13, color: '#888' }}>Mica te va a contactar pronto.</div>
+        </div>
+      ) : (
+        <>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Consulta a Ps. Mica Raffe</div>
+          <div style={{ fontSize: 12, color: '#666', marginBottom: 16 }}>Completá el formulario y te contactamos</div>
+
+          <div style={{ fontSize: 11, color: '#888', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>¿Qué te interesa?</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            {['Sesión individual', 'Curso online', 'Taller grupal'].map(s => (
+              <button key={s} onClick={() => setConsultaServicio(s)} style={{
+                padding: '10px 14px', textAlign: 'left',
+                background: consultaServicio === s ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
+                border: consultaServicio === s ? '1px solid rgba(245,158,11,0.4)' : '0.5px solid rgba(255,255,255,0.08)',
+                borderRadius: 10, color: consultaServicio === s ? '#f59e0b' : '#888',
+                fontSize: 13, cursor: 'pointer', fontWeight: consultaServicio === s ? 700 : 400
+              }}>{s}</button>
+            ))}
+          </div>
+<div style={{ fontSize: 11, color: '#888', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tu WhatsApp</div>
+<input
+  type="tel"
+  value={consultaTelefono}
+  onChange={e => setConsultaTelefono(e.target.value)}
+  placeholder="Ej: +54 11 1234 5678"
+  style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', color: '#f0f0f0', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'system-ui', marginBottom: 16 }}
+/>
+          <div style={{ fontSize: 11, color: '#888', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tu mensaje</div>
+          <textarea value={consultaMensaje} onChange={e => setConsultaMensaje(e.target.value)}
+            placeholder="Contame un poco sobre vos y qué estás buscando..."
+            style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 14px', color: '#f0f0f0', fontSize: 13, outline: 'none', resize: 'none', minHeight: 90, lineHeight: 1.6, boxSizing: 'border-box', fontFamily: 'system-ui', marginBottom: 16 }}
+          />
+
+          <button onClick={enviarConsulta} disabled={enviandoConsulta || !consultaMensaje.trim()} style={{
+            width: '100%', background: enviandoConsulta || !consultaMensaje.trim() ? '#333' : '#f59e0b',
+            color: enviandoConsulta || !consultaMensaje.trim() ? '#888' : '#0a0a0a',
+            border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700, cursor: 'pointer'
+          }}>
+            {enviandoConsulta ? 'Enviando...' : 'Enviar consulta'}
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+)}
 
 
       {/* MODAL EVENTO */}
@@ -695,6 +777,31 @@ export default function HomePage() {
   </div>
   <div style={{ color: '#a3e635', fontSize: 18 }}>→</div>
 </div>
+
+{/* SERVICIOS MICA — solo no premium */}
+{!(profile as any).es_premium && (
+  <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(163,230,53,0.06))', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 16, padding: 16, marginBottom: 14 }}>
+    <div style={{ fontSize: 10, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10 }}>🙋‍♀️ Trabajá con Ps. Mica Raffe</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+      {[
+        { icon: '🎯', titulo: 'Sesión individual', desc: 'Psicología deportiva personalizada' },
+        { icon: '📚', titulo: 'Cursos online', desc: 'Entrenamiento mental para padeleros' },
+        { icon: '👥', titulo: 'Taller grupal', desc: 'Para academias y clubes' },
+      ].map((s, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 16 }}>{s.icon}</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#f0f0f0' }}>{s.titulo}</div>
+            <div style={{ fontSize: 11, color: '#666' }}>{s.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+    <button onClick={() => setMostrarConsulta(true)} style={{ width: '100%', background: '#f59e0b', color: '#0a0a0a', border: 'none', borderRadius: 12, padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+      Quiero saber más →
+    </button>
+  </div>
+)}
 
         {/*INSIGHT */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
